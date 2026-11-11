@@ -1,0 +1,62 @@
+{
+  "corp_id": "YOUR_DINGTALK_CORP_ID",
+  "dingtalk_app_id": "YOUR_DINGTALK_APP_ID",
+  "dingtalk_client_id": "YOUR_DINGTALK_CLIENT_ID",
+  "dingtalk_client_secret": "YOUR_DINGTALK_CLIENT_SECRET",
+  "dingtalk_app_key": "",
+  "dingtalk_app_secret": "",
+  "yida_app_type": "YOUR_YIDA_APP_TYPE",
+  "yida_system_token": "YOUR_YIDA_SYSTEM_TOKEN",
+  "manager_user_id": "YOUR_MANAGER_USER_ID",
+  "default_password": "change_me_before_use",
+  "api": {
+    "token_url": "https://api.dingtalk.com/v1.0/oauth2/accessToken",
+    "instance_url": "https://api.dingtalk.com/v1.0/yida/forms/instances/query",
+    "forms_url": "https://api.dingtalk.com/v1.0/yida/forms",
+    "auth_header": "x-acs-dingtalk-access-token"
+  },
+  "forms": {
+    "org": "",
+    "customer": "FORM-ADC8EA1DE7EE46C2834C794F3A7DB387YYZZ",
+    "product": "FORM-ACC64AA09DFC4B0CB20584DECC83FCB3D4BI"
+  },
+  "field_map": {
+    "org": {},
+    "customer": {
+      "name": "textField_mhokxssc",
+      "credit_code": "textField_mhokxstz",
+      "address": "textField_mhokxssu",
+      "region": "selectField_mhw1tfx4",
+      "channel": "selectField_mizqiodv",
+      "level": "selectField_miwiyo6g",
+      "owner": "employeeField_mhokxssd",
+      "contact_name": "textField_mhokxssr",
+      "contact_phone": "textField_mhokxsss",
+      "contact_email": "textField_mhokxsst",
+      "remark": "textareaField_mhokxswh"
+    },
+    "product": {
+      "name": "textField_mqq973pp",
+      "description_fields": ["radioField_muc3p8rt", "multiSelectField_mqqabl7d"]
+    }
+  },
+  "level_code_map": {
+    "战略客户": "A",
+    "重要客户": "B",
+    "一般客户": "C",
+    "潜在客户": "D"
+  },
+  "role_rules": [
+    {"contains": "总监", "role": "sales_director"},
+    {"contains": "总", "role": "sales_director"},
+    {"contains": "经理", "role": "regional_manager"},
+    {"contains": "主管", "role": "regional_manager"},
+    {"contains": "财务", "role": "finance"},
+    {"contains": "会计", "role": "finance"},
+    {"contains": "售后", "role": "after_sale"},
+    {"contains": "客服", "role": "after_sale"},
+    {"contains": "品控", "role": "qc"},
+    {"contains": "质", "role": "qc"}
+  ],
+  "default_role": "salesrep"
+}

@@ -1,0 +1,40 @@
+# ============ Python ============
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# ============ 虚拟环境（82M，按 requirements.txt 重建） ============
+backend/venv/
+
+# ============ 数据库（运行时数据，含真实业务数据/PII，勿入库） ============
+*.db
+*.sqlite
+*.sqlite3
+*.db.bak
+*.db.bak.*
+
+# ============ 密钥 / 本地配置（真实凭据，勿入库） ============
+tools/yida_import/config.json
+*.env
+.env
+*.key
+*.pem
+
+# ============ 生成物（非源码，按需另行归档） ============
+output/
+
+# ============ 操作系统 / 编辑器 ============
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# ============ WorkBuddy 内部 ============
+.workbuddy/

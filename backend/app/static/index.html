@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>公司CRM系统</title>
+  <link rel="stylesheet" href="/assets/vendor/element-plus.css" />
+  <script src="/assets/vendor/vue.global.prod.js"></script>
+  <script src="/assets/vendor/element-plus.full.min.js"></script>
+  <script src="/assets/vendor/echarts.min.js"></script>
+  <style>
+    :root{
+      --brand:#C00000; --brand-d:#9e1b1b; --brand-l:#fdeaea;
+      --side:#1f2430; --side-d:#171b25; --ink:#1f2733; --muted:#8a93a3;
+      --bg:#f4f6fa; --card:#ffffff; --line:#eef0f4;
+      --shadow:0 6px 22px rgba(31,39,51,.08); --shadow-h:0 12px 30px rgba(31,39,51,.14);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:"Microsoft YaHei","PingFang SC",-apple-system,sans-serif;background:var(--bg);color:var(--ink)}
+    [v-cloak]{display:none}
+
+    /* 登录 */
+    .login{height:100vh;display:flex}
+    .login-left{flex:1;position:relative;overflow:hidden;
+      background:linear-gradient(135deg,#bd5e5e 0%,#a44747 52%,#833838 100%);color:#fff;
+      display:flex;flex-direction:column;justify-content:center;padding:0 8%}
+    .login-left::after{content:"";position:absolute;right:-120px;bottom:-120px;width:380px;height:380px;background:rgba(255,255,255,.08);border-radius:50%}
+    .login-left::before{content:"";position:absolute;left:-80px;top:-80px;width:260px;height:260px;background:rgba(255,255,255,.06);border-radius:50%}
+    .brand-logo{width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;backdrop-filter:blur(4px);margin-bottom:26px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+    .brand-name{font-size:30px;font-weight:800;letter-spacing:2px;margin-bottom:10px}
+    .brand-slogan{font-size:15px;opacity:.92;margin-bottom:38px;font-weight:300}
+    .brand-feats{list-style:none;position:relative;z-index:1}
+    .brand-feats li{display:flex;align-items:center;gap:12px;margin:16px 0;font-size:15px;opacity:.95}
+    .brand-feats i{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:14px;font-style:normal}
+    .login-right{flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+    .login-box{width:380px;background:#fff;border-radius:18px;padding:44px 40px;box-shadow:var(--shadow-h)}
+    .login-box h2{font-size:24px;font-weight:800;color:var(--ink)}
+    .login-tip{color:var(--muted);font-size:13px;margin:8px 0 28px}
+    .login-btn{width:100%;height:46px;font-size:16px;font-weight:700;border:none;border-radius:10px;background:linear-gradient(90deg,#C00000,#e23b3b);box-shadow:0 8px 18px rgba(192,0,0,.28);letter-spacing:4px}
+    .login-foot{margin-top:22px;text-align:center;color:#b6bcc7;font-size:12px}
+    .login-field{margin-bottom:18px}
+
+    /* 页面标题（与其它页面 card-title 协调） */
+    .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+    .ph-title{font-size:17px;font-weight:700;color:var(--ink);letter-spacing:.5px}
+
+    /* 产品分类：自研可折叠树 */
+    .cat-tree{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);
+      font-family:"Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;font-size:13px;color:var(--ink)}
+    .cat-head{display:flex;align-items:center;padding:10px 14px;background:#fafbfc;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);font-weight:600}
+    .cat-th-meta{width:150px;text-align:center;flex:none}
+    .cat-th-ops{width:140px;text-align:center;flex:none}
+    .cat-node .cat-row{display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid #f3f4f7;transition:background .12s}
+    .cat-node .cat-row:hover{background:#f7f9fc}
+    .cat-node .cat-row-odd{background:#fcfdff}
+    .cat-caret{width:18px;color:var(--muted);cursor:pointer;user-select:none;font-size:12px;text-align:center}
+    .cat-caret:hover{color:var(--brand)}
+    .cat-name{cursor:default;transition:color .15s}
+    .cat-name.clickable{cursor:pointer;font-weight:600}
+    .cat-name.clickable:hover{color:var(--brand);text-decoration:underline}
+    .cat-tag{margin-left:8px}
+    .cat-meta{margin-left:14px;color:var(--muted);font-size:12px;flex:none;width:150px;text-align:center}
+    .cat-note{margin-left:14px;color:var(--muted);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .cat-ops{width:140px;flex:none;text-align:right}
+    .cat-empty{padding:30px;text-align:center;color:var(--muted)}
+    .login-field .el-input{width:100%}
+    .login-field:last-of-type{margin-bottom:24px}
+
+    /* 框架 */
+    .app-shell{height:100vh}
+    .aside{background:linear-gradient(180deg,var(--side),var(--side-d));display:flex;flex-direction:column;overflow:hidden}
+    .aside-brand{height:64px;display:flex;align-items:center;gap:12px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .aside-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#e23b3b,#C00000);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;box-shadow:0 4px 12px rgba(192,0,0,.4)}
+    .aside-title{color:#fff;font-weight:700;font-size:16px;letter-spacing:1px}
+    .aside-sub{color:rgba(255,255,255,.45);font-size:11px;margin-top:2px}
+    .aside-nav{overflow-y:auto;flex:1;padding:10px 0}
+    .aside-nav::-webkit-scrollbar{width:6px}
+    .aside-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
+    .nav-group{margin:6px 12px 2px;color:rgba(255,255,255,.4);font-size:11px;letter-spacing:1px;padding:8px 6px 4px;font-weight:600;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;transition:color .15s}
+    .nav-group:hover{color:rgba(255,255,255,.72)}
+    .ng-caret{font-size:10px;width:10px;text-align:center;display:inline-block;color:rgba(255,255,255,.5);transition:transform .18s}
+    .ng-caret.ng-collapsed{transform:rotate(-90deg)}
+    .nav-item{display:flex;align-items:center;gap:10px;margin:3px 12px;padding:9px 12px;border-radius:9px;color:#c5cad6;cursor:pointer;font-size:14px;transition:all .15s}
+    .nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+    .nav-item.active{background:linear-gradient(90deg,#C00000,#e23b3b);color:#fff;box-shadow:0 6px 16px rgba(192,0,0,.35);font-weight:600}
+    .nav-item .ni{font-size:15px;opacity:.9;width:18px;text-align:center}
+    .aside-foot{margin-top:auto;padding:14px 20px;color:rgba(255,255,255,.4);font-size:11px;border-top:1px solid rgba(255,255,255,.06)}
+
+    .topbar{height:60px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:0 2px 10px rgba(31,39,51,.06);position:relative;z-index:5}
+    .crumb{display:flex;align-items:center;gap:8px;font-size:15px}
+    .crumb .c-root{color:var(--muted)}
+    .crumb .c-sep{color:#d4d9e1}
+    .crumb .c-cur{color:var(--ink);font-weight:700}
+    .top-right{display:flex;align-items:center;gap:16px}
+    .search-box{position:relative}
+    .search-input{width:260px}
+    .search-drop{position:absolute;top:42px;left:0;width:380px;background:#fff;border-radius:10px;box-shadow:var(--shadow-h);z-index:30;max-height:420px;overflow:auto;padding:6px}
+    .search-grp-title{font-size:12px;color:var(--muted);padding:8px 12px 4px;font-weight:600}
+    .search-item{padding:8px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+    .search-item:hover{background:var(--brand-l)}
+    .search-item .si-desc{color:var(--muted);font-size:12px}
+    .bell{font-size:20px;color:#5b6472;cursor:pointer;position:relative}
+    .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#e23b3b,#C00000);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;box-shadow:0 3px 8px rgba(192,0,0,.3);cursor:pointer}
+    .main{padding:18px;overflow:auto;background:var(--bg);height:calc(100vh - 60px)}
+
+    /* 卡片/通用 */
+    .card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:18px}
+    .card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+    .card-title .ct-sub{font-size:12px;color:var(--muted);font-weight:400}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+    .kpi{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;position:relative;overflow:hidden}
+    .kpi .k-label{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .kpi .k-val{font-size:24px;font-weight:800;color:var(--ink);line-height:1.1}
+    .kpi .k-unit{font-size:13px;color:var(--muted);font-weight:600;margin-left:3px}
+    .kpi .k-growth{font-size:12px;margin-top:8px;display:inline-flex;align-items:center;gap:4px}
+    .kpi .k-ic{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:10px;background:var(--brand-l);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:18px}
+    .up{color:#2ba471}.down{color:#e0532f}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+    .toolbar .spacer{flex:1}
+    .sec-title{font-size:16px;font-weight:700;margin:6px 0 14px;display:flex;align-items:center;gap:8px}
+    .sec-title::before{content:"";width:4px;height:16px;background:var(--brand);border-radius:2px;display:inline-block}
+    .chart{width:100%}
+    .tag-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+    .empty{color:var(--muted);text-align:center;padding:40px;font-size:14px}
+    .scope-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+    .link{color:var(--brand);cursor:pointer}
+    .drawer-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0 18px}
+    .ds{background:var(--bg);border-radius:10px;padding:12px;text-align:center}
+    .ds .v{font-size:18px;font-weight:800;color:var(--brand)}
+    .ds .l{font-size:12px;color:var(--muted);margin-top:4px}
+    .timeline-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+    .tl-dot{width:10px;height:10px;border-radius:50%;margin-top:5px;flex:none}
+    .tl-body .tl-t{font-weight:600;font-size:13px}
+    .tl-body .tl-c{color:var(--muted);font-size:12px;margin-top:2px}
+    .tl-body .tl-time{color:#b6bcc7;font-size:11px;margin-top:2px}
+    .kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px}
+    .kb-col{background:var(--bg);border-radius:12px;min-width:240px;flex:1;padding:12px}
+    .kb-col-h{font-weight:700;font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+    .kb-card{background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(31,39,51,.06);cursor:pointer}
+    .kb-card:hover{box-shadow:0 4px 14px rgba(31,39,51,.12)}
+    .kb-amt{color:var(--brand);font-weight:700;margin-top:6px}
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak></div>
+
+  <script>
+  const { createApp, reactive, ref, computed, onMounted, watch, nextTick } = Vue;
+  const ElMessage = ElementPlus.ElMessage;
+  const ElMessageBox = ElementPlus.ElMessageBox;
+
+  /* ============================ 全局状态 & 请求 ============================ */
+  const TOKEN_KEY = 'crm_token';
+  const store = reactive({
+    token: localStorage.getItem(TOKEN_KEY) || '',
+    user: null,
+    opts: { customers:[], products:[], users:[], regions:[], channels:[], levels:[], categories:[], dicts:{}, orders:[] },
+    notifications: [],
+    unread: 0,
+    ui: { pendingCreate: null }
+  });
+  function setToken(t){ store.token = t; if(t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); }
+  function authHeader(){ return store.token ? { Authorization: 'Bearer ' + store.token } : {}; }
+
+  async function api(path, { method='GET', body, params } = {}) {
+    let url = '/api' + path;
+    if (params) {
+      const qs = new URLSearchParams();
+      for (const k in params) { const v = params[k]; if (v !== undefined && v !== null && v !== '') qs.set(k, v); }
+      const s = qs.toString(); if (s) url += '?' + s;
+    }
+    const opt = { method, headers: { 'Content-Type':'application/json', ...authHeader() } };
+    if (body !== undefined) opt.body = JSON.stringify(body);
+    let res = await fetch(url, opt);
+    if (res.status === 401) { setToken(''); store.user = null; throw new Error('登录已过期，请重新登录'); }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || ('请求失败(' + res.status + ')'));
+    return data;
+  }
+
+  function fmtMoney(v){ const n = Number(v||0); return '¥' + n.toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+  function fmtNum(v){ const n = Number(v||0); return n.toLocaleString('zh-CN'); }
+  function fmtDateTime(v){ if(!v) return ''; return String(v).replace('T',' ').slice(0,19); }
+  function tagType(v){ const m={ '待跟进':'info','跟进中':'warning','有效':'success','无效':'info','草稿':'info','待审批':'warning','已通过':'success','已驳回':'danger','待确认':'warning','待发货':'warning','已发货':'primary','已完成':'success','已取消':'info','执行中':'success','待签署':'warning','已到期':'danger','已终止':'info','新建':'info','处理中':'warning','待回访':'warning','已结案':'success','高':'danger','中':'warning','低':'success','待核算':'info','待审批':'warning','已批准':'success','已兑换':'success','已寄出':'primary','已签收':'success','已开票':'success','已作废':'info','在售':'success','停售':'info' }; return m[v]||'info'; }
+  function rateColor(v){ const n = Number(v||0); return n>=100?'#2ba471':(n>=80?'#C00000':'#e0532f'); }
+
+  /* ============================ 模块元配置（驱动通用 CRUD） ============================ */
+  const CUSTOMER_TYPES = [ {value:'dealer',label:'经销商'}, {value:'restaurant',label:'餐饮门店'}, {value:'supermarket',label:'商超'}, {value:'group',label:'企业团购'} ];
+  const OPP_STAGES = ['初步接触','需求确认','样品测试','报价谈判','合同确认','成交'];
+  const ORDER_STATUS = ['待确认','待发货','已发货','部分发货','已完成','已取消'];
+  const COMPLAINT_STATUS = ['新建','处理中','待回访','已结案'];
+  const REBATE_STATUS = ['待核算','待审批','已批准','已兑换'];
+
+  function sel(arr){ return arr; } // 透传
+
+  const MODULES = {
+    'leads': {
+      label:'线索管理', icon:'🎯', group:'销售过程', api:{list:'/leads',create:'/leads',update:'/leads',del:'/leads',pk:'id'},
+      columns:[
+        {key:'customer_name',label:'客户名称',minWidth:140},
+        {key:'contact',label:'联系人',width:90},
+        {key:'phone',label:'电话',width:120},
+        {key:'region_name',label:'区域',width:90},
+        {key:'source',label:'来源',width:90,type:'tag'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'score',label:'评分',width:70},
+        {key:'owner_name',label:'负责人',width:90},
+        {key:'is_overdue',label:'逾期',width:70,type:'bool'}
+      ],
+      filters:[ {param:'status',label:'状态',options:['待跟进','跟进中','有效','无效']}, {param:'source',label:'来源',options:'dict:lead_source'} ],
+      form:{ fields:[
+        {key:'customer_name',label:'客户名称',required:true},
+        {key:'contact',label:'联系人'},
+        {key:'phone',label:'电话'},
+        {key:'wechat',label:'微信'},
+        {key:'region_id',label:'区域',type:'select',options:'regions'},
+        {key:'source',label:'来源',type:'select',options:'dict:lead_source'},
+        {key:'status',label:'状态',type:'select',options:['待跟进','跟进中','有效','无效']},
+        {key:'score',label:'评分',type:'number'},
+        {key:'address',label:'地址',col:2},
+        {key:'note',label:'备注',type:'textarea',col:2}
+      ]},
+      rowActions:[
+        {label:'转为客户',type:'primary',dialog:{title:'转化为客户',fields:[ {key:'customer_type',label:'客户类型',type:'select',options:CUSTOMER_TYPES}, {key:'level_id',label:'客户等级',type:'select',options:'levels'}, {key:'channel_type_id',label:'渠道',type:'select',options:'channels'} ]}, method:'POST', url:r=>'/leads/'+r.id+'/convert', body:true}
+      ]
+    },
+    'lead-pool': {
+      label:'线索公海', icon:'🌊', group:'销售过程', api:{list:'/leads',create:'/leads',update:'/leads',del:'/leads',pk:'id'},
+      listParams:{pool:true},
+      columns:[
+        {key:'customer_name',label:'客户名称',minWidth:140},
+        {key:'contact',label:'联系人',width:90},
+        {key:'phone',label:'电话',width:120},
+        {key:'region_name',label:'区域',width:90},
+        {key:'source',label:'来源',width:90,type:'tag'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'score',label:'评分',width:70},
+        {key:'is_overdue',label:'逾期',width:70,type:'bool'}
+      ],
+      form:{ fields:[ {key:'customer_name',label:'客户名称',required:true},{key:'contact',label:'联系人'},{key:'phone',label:'电话'},{key:'region_id',label:'区域',type:'select',options:'regions'},{key:'source',label:'来源',type:'select',options:'dict:lead_source'},{key:'status',label:'状态',type:'select',options:['待跟进','跟进中','有效','无效']},{key:'score',label:'评分',type:'number'},{key:'note',label:'备注',type:'textarea',col:2} ]},
+      rowActions:[ {label:'认领',type:'success',confirm:'确认认领该线索？',method:'POST',url:r=>'/leads/'+r.id+'/claim'} ]
+    },
+    'opportunities': {
+      label:'商机管理', icon:'💡', group:'销售过程', api:{list:'/opportunities',create:'/opportunities',update:'/opportunities',del:'/opportunities',pk:'id'},
+      columns:[
+        {key:'name',label:'商机名称',minWidth:160},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'amount',label:'预计金额',width:110,type:'money'},
+        {key:'stage',label:'阶段',width:100,type:'tag'},
+        {key:'win_prob',label:'赢单率',width:80,type:'rate'},
+        {key:'weighted',label:'加权金额',width:110,type:'money'},
+        {key:'owner_name',label:'负责人',width:90},
+        {key:'days_open',label:'跟进天数',width:90}
+      ],
+      filters:[ {param:'stage',label:'阶段',options:OPP_STAGES} ],
+      form:{ fields:[
+        {key:'name',label:'商机名称',required:true},
+        {key:'customer_id',label:'客户',type:'customer',required:true},
+        {key:'owner_id',label:'负责人',type:'user'},
+        {key:'amount',label:'预计金额',type:'number'},
+        {key:'stage',label:'阶段',type:'select',options:OPP_STAGES},
+        {key:'win_prob',label:'赢单率(%)',type:'number'},
+        {key:'expected_close',label:'预计成交',type:'date'},
+        {key:'intend_product',label:'意向产品',col:2},
+        {key:'next_action',label:'下一步动作',type:'textarea',col:2}
+      ]},
+      rowActions:[
+        {label:'推进阶段',type:'primary',dialog:{title:'变更商机阶段',fields:[ {key:'stage',label:'阶段',type:'select',options:OPP_STAGES}, {key:'lost_reason',label:'丢单原因',type:'select',options:'dict:lost_reason'} ]}, method:'POST', url:r=>'/opportunities/'+r.id+'/stage', body:true}
+      ]
+    },
+    'quotations': {
+      label:'报价单', icon:'📄', group:'销售过程', api:{list:'/quotations',create:'/quotations',update:'/quotations',del:'/quotations',pk:'id'},
+      columns:[
+        {key:'quote_no',label:'报价单号',width:170},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'total_amount',label:'金额',width:110,type:'money'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'owner_name',label:'负责人',width:90}
+      ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true,col:2},
+        {key:'opportunity_id',label:'关联商机',type:'select',options:'oppOptions',col:2},
+        {key:'remark',label:'备注',type:'textarea',col:2}
+      ], items:{ label:'报价明细', fields:[ {key:'product_id',label:'产品',type:'product'},{key:'qty',label:'数量',type:'number'},{key:'unit_price',label:'单价',type:'number'} ] } }
+    },
+    'orders': {
+      label:'订单管理', icon:'🧾', group:'销售过程', api:{list:'/orders',create:'/orders',update:'/orders',del:'/orders',pk:'id'},
+      columns:[
+        {key:'order_no',label:'订单号',width:170},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'total_amount',label:'金额',width:110,type:'money'},
+        {key:'paid_amount',label:'已回款',width:110,type:'money'},
+        {key:'remain',label:'未收',width:100,type:'money'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'owner_name',label:'负责人',width:90}
+      ],
+      filters:[ {param:'status',label:'状态',options:ORDER_STATUS} ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true,col:2},
+        {key:'quotation_id',label:'关联报价',type:'select',options:'quoteOptions',col:2},
+        {key:'account_term',label:'账期',type:'select',options:'dict:pay_term'},
+        {key:'ship_date',label:'发货日期',type:'date'},
+        {key:'receiver',label:'收货人',col:2},
+        {key:'receiver_phone',label:'收货电话',col:2},
+        {key:'address',label:'收货地址',col:2},
+        {key:'remark',label:'备注',type:'textarea',col:2}
+      ], items:{ label:'订单明细', fields:[ {key:'product_id',label:'产品',type:'product'},{key:'qty',label:'数量',type:'number'},{key:'unit_price',label:'单价',type:'number'} ] } }
+    },
+    'samples': {
+      label:'样品申请', icon:'📦', group:'销售过程', api:{list:'/samples',create:'/samples',update:'/samples',del:'/samples',pk:'id'},
+      columns:[
+        {key:'apply_no',label:'申请单号',width:170},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'purpose',label:'用途',width:120},
+        {key:'total_cost',label:'成本',width:100,type:'money'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'owner_name',label:'申请人',width:90}
+      ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true,col:2},
+        {key:'purpose',label:'用途',col:2},
+        {key:'freight_payer',label:'运费承担',type:'select',options:['我方','客户','到付']}
+      ], items:{ label:'样品明细', fields:[ {key:'product_id',label:'产品',type:'product'},{key:'qty',label:'数量',type:'number'} ] } }
+    },
+    'followups': {
+      label:'跟进记录', icon:'📝', group:'销售过程', api:{list:'/followups',create:'/followups',update:'/followups',del:'/followups',pk:'id'},
+      columns:[
+        {key:'customer_name',label:'客户',width:130},
+        {key:'ftype',label:'方式',width:90,type:'tag'},
+        {key:'content',label:'内容',minWidth:200},
+        {key:'result',label:'结果',width:120},
+        {key:'owner_name',label:'跟进人',width:90},
+        {key:'created_at',label:'时间',width:160,type:'datetime'}
+      ],
+      filters:[ {param:'ftype',label:'方式',options:'dict:visit_type'} ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer'},
+        {key:'lead_id',label:'关联线索',type:'select',options:'leadOptions'},
+        {key:'opportunity_id',label:'关联商机',type:'select',options:'oppOptions'},
+        {key:'ftype',label:'跟进方式',type:'select',options:'dict:visit_type'},
+        {key:'content',label:'跟进内容',type:'textarea',required:true,col:2},
+        {key:'result',label:'跟进结果',col:2},
+        {key:'next_at',label:'下次跟进',type:'datetime'}
+      ]}
+    },
+    'visits': {
+      label:'拜访记录', icon:'🚶', group:'销售过程', api:{list:'/visits',create:'/visits',update:'/visits',del:'/visits',pk:'id'},
+      columns:[
+        {key:'customer_name',label:'客户',width:130},
+        {key:'visit_type',label:'类型',width:100,type:'tag'},
+        {key:'content',label:'内容',minWidth:200},
+        {key:'owner_name',label:'拜访人',width:90},
+        {key:'created_at',label:'时间',width:160,type:'datetime'}
+      ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true,col:2},
+        {key:'visit_type',label:'拜访类型',type:'select',options:'dict:visit_type'},
+        {key:'content',label:'拜访内容',type:'textarea',col:2},
+        {key:'pain_point',label:'痛点',type:'textarea',col:2},
+        {key:'need',label:'需求',type:'textarea',col:2},
+        {key:'next_visit_at',label:'下次拜访',type:'datetime'}
+      ]}
+    },
+    'contacts': {
+      label:'联系人', icon:'👤', group:'客户管理', api:{list:'/contacts',create:'/customers',update:'/contacts',del:'/contacts',pk:'id', createSub:'/contacts'},
+      columns:[
+        {key:'customer_name',label:'客户',width:130},
+        {key:'name',label:'姓名',width:100},
+        {key:'phone',label:'电话',width:120},
+        {key:'title',label:'职位',width:100},
+        {key:'is_primary',label:'主要',width:70,type:'bool'},
+        {key:'wechat',label:'微信',width:110}
+      ],
+      form:{ fields:[
+        {key:'customer_id',label:'所属客户',type:'customer',required:true,col:2},
+        {key:'name',label:'姓名',required:true},
+        {key:'phone',label:'电话'},
+        {key:'title',label:'职位'},
+        {key:'wechat',label:'微信'},
+        {key:'is_primary',label:'主要联系人',type:'switch'}
+      ]},
+      createPath:r=>({customer_id:r.customer_id,name:r.name,phone:r.phone,title:r.title,wechat:r.wechat,is_primary:r.is_primary})
+    },
+    'contracts': {
+      label:'合同管理', icon:'📜', group:'客户管理', api:{list:'/contracts',create:'/contracts',update:'/contracts',del:'/contracts',pk:'id'},
+      columns:[
+        {key:'contract_no',label:'合同号',width:150},
+        {key:'title',label:'合同名称',minWidth:160},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'amount',label:'金额',width:110,type:'money'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'remain_days',label:'剩余天数',width:90}
+      ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true,col:2},
+        {key:'title',label:'合同名称',required:true},
+        {key:'contract_no',label:'合同编号'},
+        {key:'amount',label:'金额',type:'number'},
+        {key:'status',label:'状态',type:'select',options:['待签署','执行中','已到期','已终止']},
+        {key:'sign_date',label:'签署日期',type:'date'},
+        {key:'start_date',label:'开始日期',type:'date'},
+        {key:'end_date',label:'结束日期',type:'date'},
+        {key:'remark',label:'备注',type:'textarea',col:2}
+      ]}
+    },
+    'payments': {
+      label:'回款记录', icon:'💰', group:'财务中心', api:{list:'/payments',create:'/payments',update:'/payments',del:'/payments',pk:'id'},
+      columns:[
+        {key:'pay_no',label:'回款单号',width:150},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'order_no',label:'订单号',width:150},
+        {key:'amount',label:'金额',width:110,type:'money'},
+        {key:'pay_method',label:'方式',width:90,type:'tag'},
+        {key:'pay_date',label:'日期',width:120,type:'datetime'},
+        {key:'owner_name',label:'负责人',width:90}
+      ],
+      filters:[ {param:'pay_method',label:'方式',options:'dict:pay_method'} ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true},
+        {key:'order_id',label:'关联订单',type:'select',options:'orderOptions'},
+        {key:'amount',label:'回款金额',type:'number',required:true},
+        {key:'pay_date',label:'回款日期',type:'date'},
+        {key:'pay_method',label:'回款方式',type:'select',options:'dict:pay_method'}
+      ]}
+    },
+    'receivables': {
+      label:'应收台账', icon:'📊', group:'财务中心', api:{list:'/receivables',pk:'id'}, readOnly:true,
+      columns:[
+        {key:'order_no',label:'订单号',width:150},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'total_amount',label:'应收总额',width:110,type:'money'},
+        {key:'paid',label:'已收',width:100,type:'money'},
+        {key:'remain',label:'未收',width:100,type:'money'},
+        {key:'due_date',label:'到期日',width:120},
+        {key:'overdue_days',label:'逾期天数',width:90},
+        {key:'bucket',label:'账龄',width:120,type:'tag'}
+      ],
+      filters:[ {param:'only_overdue',label:'仅逾期',type:'switch'} ]
+    },
+    'invoices': {
+      label:'发票管理', icon:'🧾', group:'财务中心', api:{list:'/invoices',create:'/invoices',update:'/invoices',del:'/invoices',pk:'id'},
+      columns:[
+        {key:'invoice_no',label:'发票号',width:150},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'order_no',label:'订单号',width:150},
+        {key:'amount',label:'金额',width:110,type:'money'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'invoice_date',label:'开票日期',width:120,type:'datetime'}
+      ],
+      filters:[ {param:'status',label:'状态',options:['待开票','已开票','已作废']} ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true},
+        {key:'order_id',label:'关联订单',type:'select',options:'orderOptions'},
+        {key:'invoice_no',label:'发票号'},
+        {key:'amount',label:'金额',type:'number',required:true},
+        {key:'invoice_type',label:'发票类型',type:'select',options:['增值税专用发票','增值税普通发票']},
+        {key:'invoice_date',label:'开票日期',type:'date'},
+        {key:'title',label:'抬头',col:2},
+        {key:'tax_no',label:'税号',col:2}
+      ]}
+    },
+    'rebate-policies': {
+      label:'返利政策', icon:'📐', group:'财务中心', api:{list:'/rebate-policies',create:'/rebate-policies',update:'/rebate-policies',del:'/rebate-policies',pk:'id'},
+      columns:[
+        {key:'name',label:'政策名称',minWidth:160},
+        {key:'period',label:'周期',width:100},
+        {key:'threshold_ton',label:'阈值(吨)',width:100,type:'num'},
+        {key:'rebate_rate',label:'返利率(%)',width:100,type:'rate'}
+      ],
+      form:{ fields:[
+        {key:'name',label:'政策名称',required:true},
+        {key:'period',label:'周期',type:'select',options:['月度','季度','年度']},
+        {key:'threshold_ton',label:'阈值(吨)',type:'number'},
+        {key:'rebate_rate',label:'返利率(%)',type:'number'}
+      ]}
+    },
+    'rebate-records': {
+      label:'返利记录', icon:'🎁', group:'财务中心', api:{list:'/rebate-records',create:'/rebate-records',update:'/rebate-records',del:'/rebate-records',pk:'id'},
+      columns:[
+        {key:'customer_name',label:'客户',width:130},
+        {key:'policy_name',label:'政策',width:130},
+        {key:'period',label:'周期',width:100},
+        {key:'amount',label:'金额',width:110,type:'money'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'redeem_type',label:'兑现方式',width:100}
+      ],
+      filters:[ {param:'status',label:'状态',options:REBATE_STATUS} ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true},
+        {key:'policy_id',label:'返利政策',type:'select',options:'policyOptions'},
+        {key:'period',label:'周期',type:'select',options:['月度','季度','年度']},
+        {key:'amount',label:'返利金额',type:'number',required:true},
+        {key:'redeem_type',label:'兑现方式',type:'select',options:['现金','抵货款','实物']},
+        {key:'status',label:'状态',type:'select',options:REBATE_STATUS}
+      ]}
+    },
+    'products': {
+      label:'产品档案', icon:'🍲', group:'产品与竞品', api:{list:'/products',create:'/products',update:'/products',del:'/products',pk:'id'},
+      columns:[
+        {key:'code',label:'编码',width:110},
+        {key:'name',label:'名称',minWidth:140},
+        {key:'category_name',label:'分类',width:100},
+        {key:'spec',label:'规格',width:90},
+        {key:'supply_price',label:'供货价',width:100,type:'money'},
+        {key:'cost',label:'成本',width:100,type:'money'},
+        {key:'sold_qty',label:'销量',width:90,type:'num'},
+        {key:'status',label:'状态',width:80,type:'tag'}
+      ],
+      filters:[ {param:'category_id',label:'分类',options:'categories'}, {param:'status',label:'状态',type:'select',options:[{value:1,label:'在售'},{value:0,label:'停售'}]} ],
+      form:{ fields:[
+        {key:'code',label:'产品编码',required:true},
+        {key:'name',label:'产品名称',required:true},
+        {key:'category_id',label:'分类',type:'select',options:'categories'},
+        {key:'spec',label:'规格'},
+        {key:'unit',label:'单位'},
+        {key:'barcode',label:'条码'},
+        {key:'supply_price',label:'供货价',type:'number'},
+        {key:'cost',label:'成本',type:'number'},
+        {key:'safety_stock',label:'安全库存',type:'number'},
+        {key:'shelf_life',label:'保质期(天)',type:'number'},
+        {key:'status',label:'状态',type:'select',options:[{value:1,label:'在售'},{value:0,label:'停售'}]}
+      ]}
+    },
+    'product-categories': {
+      label:'产品分类', icon:'🗂️', group:'产品与竞品', api:{list:'/product-categories',create:'/product-categories',update:'/product-categories',del:'/product-categories',pk:'id'},
+      columns:[
+        {key:'name',label:'分类名称',minWidth:160},
+        {key:'sort',label:'排序',width:80},
+        {key:'product_count',label:'产品数',width:90,type:'num'},
+        {key:'note',label:'备注',minWidth:160}
+      ],
+      form:{ fields:[
+        {key:'name',label:'分类名称',required:true},
+        {key:'sort',label:'排序',type:'number'},
+        {key:'note',label:'备注',type:'textarea',col:2}
+      ]}
+    },
+    'competitors': {
+      label:'竞品库', icon:'⚔️', group:'产品与竞品', api:{list:'/competitors',create:'/competitors',update:'/competitors',del:'/competitors',pk:'id'},
+      columns:[
+        {key:'brand',label:'品牌',width:130},
+        {key:'product_name',label:'产品',width:130},
+        {key:'channel',label:'主销渠道',width:110},
+        {key:'market_price',label:'市场价',width:100,type:'money'}
+      ],
+      form:{ fields:[
+        {key:'brand',label:'品牌',required:true},
+        {key:'product_name',label:'产品名称'},
+        {key:'spec',label:'规格'},
+        {key:'channel',label:'主销渠道'},
+        {key:'market_price',label:'市场价',type:'number'},
+        {key:'strength',label:'竞品优势',type:'textarea',col:2},
+        {key:'weakness',label:'竞品短板',type:'textarea',col:2},
+        {key:'note',label:'备注',type:'textarea',col:2}
+      ]}
+    },
+    'complaints': {
+      label:'客诉工单', icon:'🛠️', group:'售后服务', api:{list:'/complaints',create:'/complaints',update:'/complaints',del:'/complaints',pk:'id'},
+      columns:[
+        {key:'complaint_no',label:'工单号',width:150},
+        {key:'customer_name',label:'客户',width:130},
+        {key:'ctype',label:'类型',width:100,type:'tag'},
+        {key:'urgency',label:'紧急度',width:80,type:'tag'},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'assignee_name',label:'处理人',width:90}
+      ],
+      filters:[ {param:'status',label:'状态',options:COMPLAINT_STATUS}, {param:'urgency',label:'紧急度',options:['高','中','低']}, {param:'ctype',label:'类型',options:'dict:complaint_type'} ],
+      form:{ fields:[
+        {key:'customer_id',label:'客户',type:'customer',required:true},
+        {key:'ctype',label:'客诉类型',type:'select',options:'dict:complaint_type',required:true},
+        {key:'urgency',label:'紧急度',type:'select',options:['高','中','低']},
+        {key:'description',label:'问题描述',type:'textarea',required:true,col:2},
+        {key:'assignee_id',label:'处理人',type:'user'},
+        {key:'batch',label:'批次号'},
+        {key:'solution',label:'解决方案',type:'textarea',col:2},
+        {key:'result',label:'处理结果',type:'textarea',col:2}
+      ]},
+      rowActions:[
+        {label:'结案',type:'success',confirm:'确认结案该客诉？',method:'POST',url:r=>'/complaints/'+r.id+'/close'}
+      ]
+    },
+    'cross-sales': {
+      label:'窜货登记', icon:'🚚', group:'售后服务', api:{list:'/cross-sales',create:'/cross-sales',update:'/cross-sales',del:'/cross-sales',pk:'id'},
+      columns:[
+        {key:'dealer_name',label:'经销商',width:130},
+        {key:'product_batch',label:'产品批次',width:130},
+        {key:'found_location',label:'发现地点',minWidth:160},
+        {key:'status',label:'状态',width:90,type:'tag'},
+        {key:'reporter_name',label:'上报人',width:90}
+      ],
+      form:{ fields:[
+        {key:'dealer_id',label:'违规经销商',type:'customer',required:true},
+        {key:'product_batch',label:'产品批次'},
+        {key:'found_location',label:'发现地点',col:2},
+        {key:'status',label:'状态',type:'select',options:['待处理','处理中','已处理']},
+        {key:'handle_result',label:'处理结果',type:'textarea',col:2}
+      ]}
+    },
+    'users': {
+      label:'用户管理', icon:'🔑', group:'审批与系统', api:{list:'/users',create:'/users',update:'/users',del:'/users',pk:'id'},
+      columns:[
+        {key:'username',label:'账号',width:120},
+        {key:'name',label:'姓名',width:100},
+        {key:'role_label',label:'角色',width:110,type:'tag'},
+        {key:'region_name',label:'区域',width:100},
+        {key:'phone',label:'电话',width:120},
+        {key:'status',label:'状态',width:80,type:'tag'}
+      ],
+      filters:[ {param:'role',label:'角色',options:[{value:'super_admin',label:'超级管理员'},{value:'sales_director',label:'销售总监'},{value:'regional_manager',label:'区域主管'},{value:'salesrep',label:'业务员'},{value:'finance',label:'财务'},{value:'after_sales',label:'售后'},{value:'qc',label:'品控'}]} ],
+      form:{ fields:[
+        {key:'username',label:'登录账号',required:true},
+        {key:'name',label:'姓名',required:true},
+        {key:'role',label:'角色',type:'select',options:[{value:'super_admin',label:'超级管理员'},{value:'sales_director',label:'销售总监'},{value:'regional_manager',label:'区域主管'},{value:'salesrep',label:'业务员'},{value:'finance',label:'财务'},{value:'after_sales',label:'售后'},{value:'qc',label:'品控'}],required:true},
+        {key:'region_id',label:'区域',type:'select',options:'regions'},
+        {key:'parent_id',label:'直属主管',type:'user'},
+        {key:'phone',label:'电话'},
+        {key:'wechat',label:'微信'},
+        {key:'password',label:'密码(新建必填)',type:'text'}
+      ]}
+    },
+    'dicts': {
+      label:'数据字典', icon:'📚', group:'审批与系统', api:{list:'/dicts/manage',create:'/dicts',update:'/dicts',del:'/dicts',pk:'id'},
+      columns:[
+        {key:'type_label',label:'类型',width:130},
+        {key:'name',label:'名称',minWidth:140},
+        {key:'sort',label:'排序',width:80},
+        {key:'active',label:'启用',width:80,type:'bool'}
+      ],
+      form:{ fields:[
+        {key:'dtype',label:'字典类型',type:'select',options:[{value:'lead_source',label:'线索来源'},{value:'customer_tag',label:'客户标签'},{value:'complaint_type',label:'客诉类型'},{value:'lost_reason',label:'丢单原因'},{value:'pay_method',label:'回款方式'},{value:'visit_type',label:'跟进方式'}],required:true},
+        {key:'name',label:'名称',required:true},
+        {key:'sort',label:'排序',type:'number'},
+        {key:'active',label:'启用',type:'switch'}
+      ]}
+    },
+    'audit-logs': {
+      label:'操作日志', icon:'📒', group:'审批与系统', api:{list:'/audit-logs',pk:'id'}, readOnly:true,
+      columns:[
+        {key:'created_at',label:'时间',width:170,type:'datetime'},
+        {key:'user_name',label:'操作人',width:100},
+        {key:'action',label:'动作',width:90,type:'tag'},
+        {key:'module',label:'模块',width:110},
+        {key:'detail',label:'详情',minWidth:240}
+      ]
+    },
+    'customer-pool': {
+      label:'客户公海', icon:'🌊', group:'客户管理', api:{list:'/customers',create:'/customers',update:'/customers',del:'/customers',pk:'id'}, listParams:{pool:true},
+      columns:[
+        {key:'name',label:'客户名称',minWidth:150},
+        {key:'level_name',label:'等级',width:80,type:'tag'},
+        {key:'customer_type',label:'类型',width:100,type:'tag'},
+        {key:'channel_name',label:'渠道',width:100},
+        {key:'region_name',label:'区域',width:100},
+        {key:'order_count',label:'历史订单',width:90,type:'num'}
+      ],
+      form:{ fields:[
+        {key:'name',label:'客户名称',required:true},
+        {key:'customer_type',label:'客户类型',type:'select',options:CUSTOMER_TYPES},
+        {key:'level_id',label:'等级',type:'select',options:'levels'},
+        {key:'channel_type_id',label:'渠道',type:'select',options:'channels'},
+        {key:'region_id',label:'区域',type:'select',options:'regions'},
+        {key:'phone',label:'电话'},
+        {key:'wechat',label:'微信'},
+        {key:'address',label:'地址',col:2},
+        {key:'remark',label:'备注',type:'textarea',col:2}
+      ]},
+      rowActions:[ {label:'认领',type:'success',confirm:'确认认领该客户？',method:'POST',url:r=>'/customers/'+r.id+'/claim'} ]
+    }
+  };
+
+  /* 导航结构 */
+  const NAV = [
+    { group:'分析中心', items:[
+      {key:'workbench',label:'工作台',icon:'🏠'},
+      {key:'analysis/customer',label:'客户分析',icon:'👥'},
+      {key:'analysis/sales',label:'销售分析',icon:'📈'},
+      {key:'analysis/finance',label:'财务分析',icon:'💹'},
+      {key:'analysis/target',label:'业绩目标',icon:'🎯'},
+      {key:'analysis/product',label:'产品分析',icon:'🍲'}
+    ]},
+    { group:'客户管理', items:[
+      {key:'customers',label:'客户档案',icon:'🏢'},
+      {key:'customer-pool',label:'客户公海',icon:'🌊'},
+      {key:'contacts',label:'联系人',icon:'👤'},
+      {key:'contracts',label:'合同管理',icon:'📜'}
+    ]},
+    { group:'销售过程', items:[
+      {key:'leads',label:'线索管理',icon:'🎯'},
+      {key:'lead-pool',label:'线索公海',icon:'🌊'},
+      {key:'opportunities',label:'商机管理',icon:'💡'},
+      {key:'opp-board',label:'商机看板',icon:'🧩'},
+      {key:'quotations',label:'报价单',icon:'📄'},
+      {key:'orders',label:'订单管理',icon:'🧾'},
+      {key:'samples',label:'样品申请',icon:'📦'},
+      {key:'followups',label:'跟进记录',icon:'📝'},
+      {key:'visits',label:'拜访记录',icon:'🚶'}
+    ]},
+    { group:'财务中心', items:[
+      {key:'payments',label:'回款记录',icon:'💰'},
+      {key:'receivables',label:'应收台账',icon:'📊'},
+      {key:'invoices',label:'发票管理',icon:'🧾'},
+      {key:'rebate-policies',label:'返利政策',icon:'📐'},
+      {key:'rebate-records',label:'返利记录',icon:'🎁'}
+    ]},
+    { group:'售后服务', items:[
+      {key:'complaints',label:'客诉工单',icon:'🛠️'},
+      {key:'cross-sales',label:'窜货登记',icon:'🚚'}
+    ]},
+    { group:'产品与竞品', items:[
+      {key:'products',label:'产品档案',icon:'🍲'},
+      {key:'product-categories',label:'产品分类',icon:'🗂️'},
+      {key:'competitors',label:'竞品库',icon:'⚔️'}
+    ]},
+    { group:'审批与系统', items:[
+      {key:'approvals',label:'审批中心',icon:'✅'},
+      {key:'users',label:'用户管理',icon:'🔑'},
+      {key:'dicts',label:'数据字典',icon:'📚'},
+      {key:'audit-logs',label:'操作日志',icon:'📒'}
+    ]}
+  ];
+  const ALL_NAV = {}; NAV.forEach(g=>g.items.forEach(i=>ALL_NAV[i.key]=i));
+
+  /* ============================ 通用 CRUD 视图 ============================ */
+  const CrudView = {
+    props:{ mod:String },
+    data(){ return { rows:[], loading:false, query:{ q:'' }, dialogVisible:false, editing:null, form:{}, formLoading:false,
+      itemRows:[], actionDialog:false, actionDef:null, actionRow:null, actionForm:{}, actionLoading:false, page:1, total:0 }; },
+    computed:{
+      m(){ return MODULES[this.mod]; },
+      cols(){ return this.m.columns; },
+      visibleActions(){ return this.m.rowActions||[]; }
+    },
+    methods:{
+      async load(){
+        this.loading=true;
+        try{
+          const params = Object.assign({}, this.m.listParams||{}, this.query);
+          if(this.m.api.list) this.rows = await api(this.m.api.list, { params });
+        }catch(e){ ElMessage.error(e.message); } finally{ this.loading=false; }
+      },
+      resolveOptions(opt){
+        if(!opt) return [];
+        if(Array.isArray(opt)) return opt.map(x=> typeof x==='string'?{value:x,label:x}:x);
+        if(typeof opt==='string'){
+          if(opt.startsWith('dict:')){ const k=opt.slice(5); return (store.opts.dicts[k]||[]).map(v=>({value:v,label:v})); }
+          const arr = store.opts[opt]||[];
+          if(opt==='oppOptions'){ return arr.map(x=>({value:x.id,label:x.name})); }
+          if(opt==='leadOptions'){ return arr.map(x=>({value:x.id,label:x.customer_name})); }
+          if(opt==='quoteOptions'||opt==='orderOptions'||opt==='policyOptions'){ return arr.map(x=>({value:x.id,label:x.order_no||x.quote_no||x.name||x.no||('#'+x.id)})); }
+          return arr.map(x=>({value:x.id, label: x.name||x.code||x.title||x.order_no||x.quote_no||('#'+x.id)}));
+        }
+        return [];
+      },
+      defaultForm(){
+        const f={}; (this.m.form?this.m.form.fields:[]).forEach(fd=>{ f[fd.key] = (fd.type==='switch')?(fd.default||false):(fd.type==='number'?null:''); });
+        if(this.m.form&&this.m.form.items) this.itemRows=[];
+        return f;
+      },
+      openCreate(){ this.editing=null; this.form=this.defaultForm(); if(this.m.form&&this.m.form.items) this.itemRows=[]; this.dialogVisible=true; },
+      openEdit(row){ this.editing=row; const f=this.defaultForm();
+        (this.m.form?this.m.form.fields:[]).forEach(fd=>{ f[fd.key] = row[fd.key]!==undefined?row[fd.key]:f[fd.key]; });
+        this.form=f;
+        if(this.m.form&&this.m.form.items){ this.itemRows = (row.items||[]).map(it=>{ const o={}; this.m.form.items.fields.forEach(iff=>o[iff.key]=it[iff.key]); return o; }); }
+        this.dialogVisible=true;
+      },
+      async save(){
+        // 校验
+        for(const fd of (this.m.form?this.m.form.fields:[])){
+          if(fd.required && (this.form[fd.key]===''||this.form[fd.key]===null||this.form[fd.key]===undefined)){ ElMessage.warning('请填写'+fd.label); return; }
+        }
+        this.formLoading=true;
+        try{
+          let body = Object.assign({}, this.form);
+          if(this.m.form&&this.m.form.items){ body.items = this.itemRows.map(r=>{ const o={}; this.m.form.items.fields.forEach(iff=>o[iff.key]=r[iff.key]); return o; }); }
+          let res;
+          if(this.editing){ res = await api('/'+this.mod+'/'+this.editing[this.m.api.pk], { method:'PUT', body }); }
+          else { res = await api('/'+this.mod, { method:'POST', body }); }
+          ElMessage.success('保存成功'); this.dialogVisible=false; this.load();
+        }catch(e){ ElMessage.error(e.message); } finally{ this.formLoading=false; }
+      },
+      async remove(row){
+        try{ await ElMessageBox.confirm('确认删除该记录？','提示',{type:'warning'}); }catch(e){ return; }
+        try{ await api('/'+this.mod+'/'+row[this.m.api.pk], { method:'DELETE' }); ElMessage.success('已删除'); this.load(); }catch(e){ ElMessage.error(e.message); }
+      },
+      visibleRowActions(row){ return (this.m.rowActions||[]).filter(a=> !a.need || a.need(row)); },
+      runRowAction(a,row){
+        if(a.dialog){ this.actionDef=a; this.actionRow=row; this.actionForm={}; (a.dialog.fields||[]).forEach(f=>this.actionForm[f.key]=''); this.actionDialog=true; return; }
+        this.doAction(a,row,{});
+      },
+      async doAction(a,row,extra){
+        if(a.confirm){ try{ await ElMessageBox.confirm(a.confirm,'提示',{type:'warning'}); }catch(e){ return; } }
+        try{ await api(a.url(row), { method:a.method||'POST', body: a.body?Object.assign({},extra):undefined }); ElMessage.success('操作成功'); this.load(); }catch(e){ ElMessage.error(e.message); }
+      },
+      async submitAction(){
+        this.actionLoading=true;
+        try{ await this.doAction(this.actionDef, this.actionRow, this.actionForm); this.actionDialog=false; }finally{ this.actionLoading=false; }
+      },
+      addItem(){ const o={}; this.m.form.items.fields.forEach(f=>o[f.key]=(f.type==='number'?null:'')); this.itemRows.push(o); },
+      delItem(i){ this.itemRows.splice(i,1); },
+      itemTotal(){ const f=this.m.form.items.fields; const qk=f.find(x=>x.key==='qty'), pk=f.find(x=>x.key==='unit_price'); if(!qk||!pk) return 0; return this.itemRows.reduce((s,r)=>s+(Number(r[qk.key]||0)*Number(r[pk.key]||0)),0); },
+      fmtMoney, fmtNum
+    },
+    template:`
+    <div>
+      <div class="toolbar">
+        <el-input v-model="query.q" placeholder="搜索" clearable @keyup.enter="load" @clear="load" style="width:220px">
+          <template #prefix><span>🔍</span></template>
+        </el-input>
+        <template v-for="f in (m.filters||[])">
+          <el-select v-if="f.type!=='switch'" v-model="query[f.param]" :placeholder="f.label" clearable @change="load" style="width:140px">
+            <el-option v-for="o in resolveOptions(f.options)" :key="o.value" :label="o.label" :value="o.value"></el-option>
+          </el-select>
+          <el-switch v-else v-model="query[f.param]" :active-value="true" :inactive-value="false" :active-text="f.label" @change="load"></el-switch>
+        </template>
+        <span class="spacer"></span>
+        <el-button v-if="!m.readOnly" type="primary" @click="openCreate">＋ 新增</el-button>
+        <el-button @click="load">刷新</el-button>
+      </div>
+      <div class="card">
+        <el-table :data="rows" v-loading="loading" stripe border style="width:100%" :max-height="560">
+          <el-table-column v-for="col in m.columns" :key="col.key" :label="col.label" :width="col.width" :min-width="col.minWidth">
+            <template #default="{row}">
+              <span v-if="col.type==='money'">{{ fmtMoney(row[col.key]) }}</span>
+              <el-tag v-else-if="col.type==='tag'" :type="tagType(row[col.key])" size="small">{{ row[col.key] }}</el-tag>
+              <span v-else-if="col.type==='bool'"><el-tag :type="row[col.key]?'success':'info'" size="small">{{ row[col.key]?'是':'否' }}</el-tag></span>
+              <span v-else-if="col.type==='rate'">{{ row[col.key] }}%</span>
+              <span v-else-if="col.type==='num'">{{ fmtNum(row[col.key]) }}</span>
+              <span v-else-if="col.type==='datetime'">{{ fmtDateTime(row[col.key]) }}</span>
+              <span v-else>{{ row[col.key] }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" :width="m.readOnly?120:200" fixed="right">
+            <template #default="{row}">
+              <el-button v-for="a in visibleRowActions(row)" :key="a.label" link type="primary" size="small" @click="runRowAction(a,row)">{{a.label}}</el-button>
+              <el-button v-if="!m.readOnly" link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button v-if="!m.readOnly" link type="danger" size="small" @click="remove(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div v-if="!rows.length && !loading" class="empty">暂无数据</div>
+      </div>
+
+      <el-dialog v-model="dialogVisible" :title="editing?('编辑 · '+m.label):('新增 · '+m.label)" width="760px">
+        <el-form :model="form" label-width="110px">
+          <el-row :gutter="16">
+            <template v-for="fd in (m.form?m.form.fields:[])">
+              <el-col :span="fd.col===2?24:12">
+                <el-form-item :label="fd.label" :required="fd.required">
+                  <el-input v-if="fd.type==='text'||!fd.type" v-model="form[fd.key]"></el-input>
+                  <el-input v-else-if="fd.type==='textarea'" v-model="form[fd.key]" type="textarea" :rows="2"></el-input>
+                  <el-input v-else-if="fd.type==='number'" v-model.number="form[fd.key]" type="number"></el-input>
+                  <el-select v-else-if="fd.type==='select'" v-model="form[fd.key]" clearable filterable style="width:100%">
+                    <el-option v-for="o in resolveOptions(fd.options)" :key="o.value" :label="o.label" :value="o.value"></el-option>
+                  </el-select>
+                  <el-select v-else-if="fd.type==='customer'" v-model="form[fd.key]" clearable filterable style="width:100%">
+                    <el-option v-for="o in resolveOptions('customers')" :key="o.value" :label="o.label" :value="o.value"></el-option>
+                  </el-select>
+                  <el-select v-else-if="fd.type==='user'" v-model="form[fd.key]" clearable filterable style="width:100%">
+                    <el-option v-for="o in resolveOptions('users')" :key="o.value" :label="o.label" :value="o.value"></el-option>
+                  </el-select>
+                  <el-select v-else-if="fd.type==='product'" v-model="form[fd.key]" clearable filterable style="width:100%">
+                    <el-option v-for="o in resolveOptions('products')" :key="o.value" :label="o.label" :value="o.value"></el-option>
+                  </el-select>
+                  <el-date-picker v-else-if="fd.type==='date'" v-model="form[fd.key]" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker>
+                  <el-date-picker v-else-if="fd.type==='datetime'" v-model="form[fd.key]" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width:100%"></el-date-picker>
+                  <el-switch v-else-if="fd.type==='switch'" v-model="form[fd.key]" :active-value="true" :inactive-value="false"></el-switch>
+                </el-form-item>
+              </el-col>
+            </template>
+          </el-row>
+          <template v-if="m.form&&m.form.items">
+            <el-divider>{{ m.form.items.label }}</el-divider>
+            <el-table :data="itemRows" border>
+              <el-table-column v-for="iff in m.form.items.fields" :key="iff.key" :label="iff.label" min-width="120">
+                <template #default="{row,$index}">
+                  <el-select v-if="iff.type==='product'" v-model="row[iff.key]" clearable filterable style="width:100%">
+                    <el-option v-for="o in resolveOptions('products')" :key="o.value" :label="o.label" :value="o.value"></el-option>
+                  </el-select>
+                  <el-input v-else-if="iff.type==='number'" v-model.number="row[iff.key]" type="number"></el-input>
+                  <el-input v-else v-model="row[iff.key]"></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="70">
+                <template #default="{row,$index}"><el-button link type="danger" size="small" @click="delItem($index)">删</el-button></template>
+              </el-table-column>
+            </el-table>
+            <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+              <el-button size="small" @click="addItem">＋ 添加明细</el-button>
+              <span style="color:var(--brand);font-weight:700">合计：{{ fmtMoney(itemTotal()) }}</span>
+            </div>
+          </template>
+        </el-form>
+        <template #footer>
+          <el-button @click="dialogVisible=false">取消</el-button>
+          <el-button type="primary" :loading="formLoading" @click="save">保存</el-button>
+        </template>
+      </el-dialog>
+
+      <el-dialog v-model="actionDialog" :title="actionDef&&actionDef.dialog?actionDef.dialog.title:''" width="460px">
+        <el-form :model="actionForm" label-width="90px">
+          <el-form-item v-for="f in (actionDef&&actionDef.dialog?actionDef.dialog.fields:[])" :key="f.key" :label="f.label">
+            <el-select v-if="f.type==='select'" v-model="actionForm[f.key]" clearable filterable style="width:100%">
+              <el-option v-for="o in resolveOptions(f.options)" :key="o.value" :label="o.label" :value="o.value"></el-option>
+            </el-select>
+            <el-input v-else v-model="actionForm[f.key]"></el-input>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="actionDialog=false">取消</el-button>
+          <el-button type="primary" :loading="actionLoading" @click="submitAction">确定</el-button>
+        </template>
+      </el-dialog>
+    </div>`,
+    mounted(){ this.load(); if(store.ui.pendingCreate===this.mod){ store.ui.pendingCreate=null; this.openCreate(); } },
+    watch:{ mod(){ this.query={q:''}; this.load(); if(store.ui.pendingCreate===this.mod){ store.ui.pendingCreate=null; this.openCreate(); } } }
+  };
+
+  /* ============================ 客户档案（含 360 视图） ============================ */
+  const CustomerView = {
+    props:{ mod:String },
+    data(){ return { rows:[], loading:false, query:{ q:'',level_id:'',customer_type:'',channel_type_id:'',owner_id:'' }, dialogVisible:false, editing:null, form:{}, formLoading:false,
+      drawer:false, detail:null, detailLoading:false, transferVisible:false, transferRow:null, transferOwner:null, poolVisible:false, poolRows:[], poolLoading:false }; },
+    methods:{
+      async load(){ this.loading=true; try{ this.rows = await api('/customers',{params:this.query}); }catch(e){ElMessage.error(e.message);} finally{this.loading=false;} },
+      async loadPool(){ this.poolLoading=true; try{ this.poolRows = await api('/customers',{params:{pool:true}}); }catch(e){ElMessage.error(e.message);} finally{this.poolLoading=false;} },
+      resolveOptions(opt){ const arr=store.opts[opt]||[]; return arr.map(x=>({value:x.id,label:x.name||x.code||x.title||('#'+x.id)})); },
+      openCreate(){ this.editing=null; const f={name:'',customer_type:'dealer',level_id:'',channel_type_id:'',region_id:'',owner_id:'',phone:'',wechat:'',address:'',remark:''}; this.form=f; this.dialogVisible=true; },
+      openEdit(row){ this.editing=row; this.form={ name:row.name,customer_type:row.customer_type,level_id:row.level_id,channel_type_id:row.channel_type_id,region_id:row.region_id,owner_id:row.owner_id,phone:row.phone,wechat:row.wechat,address:row.address,remark:row.remark }; this.dialogVisible=true; },
+      async save(){ if(!this.form.name){ElMessage.warning('请填写客户名称');return;} this.formLoading=true; try{ if(this.editing) await api('/customers/'+this.editing.id,{method:'PUT',body:this.form}); else await api('/customers',{method:'POST',body:this.form}); ElMessage.success('保存成功'); this.dialogVisible=false; this.load(); }catch(e){ElMessage.error(e.message);} finally{this.formLoading=false;} },
+      async remove(row){ try{await ElMessageBox.confirm('确认删除该客户？','提示',{type:'warning'});}catch(e){return;} try{await api('/customers/'+row.id,{method:'DELETE'});ElMessage.success('已删除');this.load();}catch(e){ElMessage.error(e.message);} },
+      async open360(row){ this.drawer=true; this.detailLoading=true; try{ this.detail = await api('/customers/'+row.id+'/360'); }catch(e){ElMessage.error(e.message);} finally{this.detailLoading=false;} },
+      async toPool(row){ try{await ElMessageBox.confirm('确认将该客户放入公海？','提示',{type:'warning'});}catch(e){return;} try{await api('/customers/'+row.id+'/to-pool',{method:'POST'});ElMessage.success('已放入公海');this.load();}catch(e){ElMessage.error(e.message);} },
+      openTransfer(row){ this.transferRow=row; this.transferOwner=''; this.transferVisible=true; },
+      async doTransfer(){ if(!this.transferOwner){ElMessage.warning('请选择新负责人');return;} try{await api('/customers/'+this.transferRow.id+'/transfer',{method:'POST',body:{owner_id:this.transferOwner}});ElMessage.success('已转移');this.transferVisible=false;this.load();}catch(e){ElMessage.error(e.message);} },
+      async claimPool(row){ try{await api('/customers/'+row.id+'/claim',{method:'POST'});ElMessage.success('已认领');this.loadPool();}catch(e){ElMessage.error(e.message);} },
+      levelPie(){ return this.data?mkPie(this.data.by_level,'等级'):null; },
+      typePie(){ return this.data?mkPie(this.data.by_type,'类型'):null; },
+      channelPie(){ return this.data?mkPie(this.data.by_channel,'渠道'):null; },
+      fmtMoney, fmtNum, tagType
+    },
+    template:`
+    <div>
+      <div class="toolbar">
+        <el-input v-model="query.q" placeholder="客户名称/信用代码/电话" clearable @keyup.enter="load" @clear="load" style="width:240px"></el-input>
+        <el-select v-model="query.level_id" placeholder="等级" clearable @change="load" style="width:120px"><el-option v-for="o in resolveOptions('levels')" :key="o.value" :label="o.label" :value="o.value"></el-option></el-select>
+        <el-select v-model="query.customer_type" placeholder="类型" clearable @change="load" style="width:130px">
+          <el-option label="经销商" value="dealer"></el-option><el-option label="餐饮门店" value="restaurant"></el-option><el-option label="商超" value="supermarket"></el-option><el-option label="企业团购" value="group"></el-option>
+        </el-select>
+        <el-select v-model="query.channel_type_id" placeholder="渠道" clearable @change="load" style="width:120px"><el-option v-for="o in resolveOptions('channels')" :key="o.value" :label="o.label" :value="o.value"></el-option></el-select>
+        <span class="spacer"></span>
+        <el-button @click="loadPool(); poolVisible=true">🌊 客户公海</el-button>
+        <el-button type="primary" @click="openCreate">＋ 新增客户</el-button>
+        <el-button @click="load">刷新</el-button>
+      </div>
+      <div class="card">
+        <el-table :data="rows" v-loading="loading" stripe border style="width:100%" :max-height="560">
+          <el-table-column prop="name" label="客户名称" min-width="160"></el-table-column>
+          <el-table-column prop="level_name" label="等级" width="80"><template #default="{row}"><el-tag v-if="row.level_name" type="warning" size="small">{{row.level_name}}</el-tag></template></el-table-column>
+          <el-table-column prop="customer_type" label="类型" width="100"><template #default="{row}"><el-tag size="small">{{ {dealer:'经销商',restaurant:'餐饮门店',supermarket:'商超',group:'企业团购'}[row.customer_type]||row.customer_type }}</el-tag></template></el-table-column>
+          <el-table-column prop="channel_name" label="渠道" width="100"></el-table-column>
+          <el-table-column prop="region_name" label="区域" width="100"></el-table-column>
+          <el-table-column prop="owner_name" label="负责人" width="90"></el-table-column>
+          <el-table-column prop="order_amount" label="累计订单" width="120"><template #default="{row}">{{ fmtMoney(row.order_amount) }}</template></el-table-column>
+          <el-table-column prop="receivable" label="应收" width="110"><template #default="{row}"><span style="color:var(--brand);font-weight:600">{{ fmtMoney(row.receivable) }}</span></template></el-table-column>
+          <el-table-column label="操作" width="230" fixed="right">
+            <template #default="{row}">
+              <el-button link type="primary" size="small" @click="open360(row)">360视图</el-button>
+              <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button link type="warning" size="small" @click="openTransfer(row)">转移</el-button>
+              <el-button link type="danger" size="small" @click="toPool(row)">公海</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div v-if="!rows.length && !loading" class="empty">暂无数据</div>
+      </div>
+
+      <el-dialog v-model="dialogVisible" :title="editing?('编辑客户 · '+editing.name):'新增客户'" width="720px">
+        <el-form :model="form" label-width="100px">
+          <el-row :gutter="16">
+            <el-col :span="12"><el-form-item label="客户名称" required><el-input v-model="form.name"></el-input></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="客户类型"><el-select v-model="form.customer_type" style="width:100%"><el-option label="经销商" value="dealer"></el-option><el-option label="餐饮门店" value="restaurant"></el-option><el-option label="商超" value="supermarket"></el-option><el-option label="企业团购" value="group"></el-option></el-select></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="客户等级"><el-select v-model="form.level_id" clearable filterable style="width:100%"><el-option v-for="o in resolveOptions('levels')" :key="o.value" :label="o.label" :value="o.value"></el-option></el-select></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="渠道"><el-select v-model="form.channel_type_id" clearable filterable style="width:100%"><el-option v-for="o in resolveOptions('channels')" :key="o.value" :label="o.label" :value="o.value"></el-option></el-select></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="区域"><el-select v-model="form.region_id" clearable filterable style="width:100%"><el-option v-for="o in resolveOptions('regions')" :key="o.value" :label="o.label" :value="o.value"></el-option></el-select></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="负责人"><el-select v-model="form.owner_id" clearable filterable style="width:100%"><el-option v-for="o in resolveOptions('users')" :key="o.value" :label="o.label" :value="o.value"></el-option></el-select></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="电话"><el-input v-model="form.phone"></el-input></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="微信"><el-input v-model="form.wechat"></el-input></el-form-item></el-col>
+            <el-col :span="24"><el-form-item label="地址"><el-input v-model="form.address"></el-input></el-form-item></el-col>
+            <el-col :span="24"><el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="2"></el-input></el-form-item></el-col>
+          </el-row>
+        </el-form>
+        <template #footer><el-button @click="dialogVisible=false">取消</el-button><el-button type="primary" :loading="formLoading" @click="save">保存</el-button></template>
+      </el-dialog>
+
+      <el-dialog v-model="transferVisible" title="转移客户负责人" width="420px">
+        <el-form label-width="90px"><el-form-item label="新负责人">
+          <el-select v-model="transferOwner" clearable filterable style="width:100%"><el-option v-for="o in resolveOptions('users')" :key="o.value" :label="o.label" :value="o.value"></el-option></el-select>
+        </el-form-item></el-form>
+        <template #footer><el-button @click="transferVisible=false">取消</el-button><el-button type="primary" @click="doTransfer">确定转移</el-button></template>
+      </el-dialog>
+
+      <el-dialog v-model="poolVisible" title="客户公海" width="820px">
+        <el-table :data="poolRows" v-loading="poolLoading" stripe border>
+          <el-table-column prop="name" label="客户名称" min-width="160"></el-table-column>
+          <el-table-column prop="level_name" label="等级" width="80"><template #default="{row}"><el-tag v-if="row.level_name" type="warning" size="small">{{row.level_name}}</el-tag></template></el-table-column>
+          <el-table-column prop="channel_name" label="渠道" width="100"></el-table-column>
+          <el-table-column prop="region_name" label="区域" width="100"></el-table-column>
+          <el-table-column prop="order_count" label="历史订单" width="90"><template #default="{row}">{{row.order_count||0}}</template></el-table-column>
+          <el-table-column label="操作" width="90"><template #default="{row}"><el-button link type="success" size="small" @click="claimPool(row)">认领</el-button></template></el-table-column>
+        </el-table>
+      </el-dialog>
+
+      <el-drawer v-model="drawer" :title="(detail&&detail.customer.name)||'客户360视图'" size="62%" direction="rtl">
+        <div v-loading="detailLoading">
+          <template v-if="detail">
+            <div class="drawer-stats">
+              <div class="ds"><div class="v">{{ fmtMoney(detail.stats.order_total) }}</div><div class="l">累计订单额</div></div>
+              <div class="ds"><div class="v">{{ detail.stats.order_count }}</div><div class="l">订单数</div></div>
+              <div class="ds"><div class="v">{{ fmtMoney(detail.stats.receivable) }}</div><div class="l">应收</div></div>
+              <div class="ds"><div class="v">{{ detail.stats.complaint_count }}</div><div class="l">客诉数</div></div>
+            </div>
+            <el-descriptions :column="2" border size="small" title="基本信息">
+              <el-descriptions-item label="客户名称">{{ detail.customer.name }}</el-descriptions-item>
+              <el-descriptions-item label="等级">{{ detail.customer.level_name||'-' }}</el-descriptions-item>
+              <el-descriptions-item label="类型">{{ {dealer:'经销商',restaurant:'餐饮门店',supermarket:'商超',group:'企业团购'}[detail.customer.customer_type] }}</el-descriptions-item>
+              <el-descriptions-item label="渠道">{{ detail.customer.channel_name||'-' }}</el-descriptions-item>
+              <el-descriptions-item label="负责人">{{ detail.customer.owner_name||'-' }}</el-descriptions-item>
+              <el-descriptions-item label="区域">{{ detail.customer.region_name||'-' }}</el-descriptions-item>
+              <el-descriptions-item label="电话">{{ detail.customer.phone||'-' }}</el-descriptions-item>
+              <el-descriptions-item label="信用额度">{{ fmtMoney(detail.stats.credit_limit) }}</el-descriptions-item>
+              <el-descriptions-item label="信用占用率">{{ detail.stats.credit_used_rate }}%</el-descriptions-item>
+              <el-descriptions-item label="标签">{{ (detail.tags||[]).join('、')||'-' }}</el-descriptions-item>
+            </el-descriptions>
+            <el-collapse style="margin-top:14px">
+              <el-collapse-item title="联系人" name="1"><el-table :data="detail.contacts" size="small"><el-table-column prop="name" label="姓名"></el-table-column><el-table-column prop="title" label="职位"></el-table-column><el-table-column prop="phone" label="电话"></el-table-column><el-table-column prop="is_primary" label="主要"><template #default="{row}">{{row.is_primary?'是':'否'}}</template></el-table-column></el-table></el-collapse-item>
+              <el-collapse-item title="合同" name="2"><el-table :data="detail.contracts" size="small"><el-table-column prop="contract_no" label="合同号"></el-table-column><el-table-column prop="title" label="名称"></el-table-column><el-table-column prop="amount" label="金额"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column><el-table-column><el-table-column prop="status" label="状态"></el-table-column></el-table></el-collapse-item>
+              <el-collapse-item title="商机" name="3"><el-table :data="detail.opportunities" size="small"><el-table-column prop="name" label="名称"></el-table-column><el-table-column prop="stage" label="阶段"></el-table-column><el-table-column prop="amount" label="金额"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column></el-table></el-collapse-item>
+              <el-collapse-item title="订单" name="4"><el-table :data="detail.orders" size="small"><el-table-column prop="order_no" label="订单号"></el-table-column><el-table-column prop="total_amount" label="金额"><template #default="{row}">{{fmtMoney(row.total_amount)}}</template></el-table-column><el-table-column prop="status" label="状态"></el-table-column></el-table></el-collapse-item>
+              <el-collapse-item title="回款" name="5"><el-table :data="detail.payments" size="small"><el-table-column prop="pay_no" label="回款号"></el-table-column><el-table-column prop="amount" label="金额"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column><el-table-column prop="pay_date" label="日期"></el-table-column></el-table></el-collapse-item>
+              <el-collapse-item title="客诉" name="6"><el-table :data="detail.complaints" size="small"><el-table-column prop="ctype" label="类型"></el-table-column><el-table-column prop="urgency" label="紧急度"></el-table-column><el-table-column prop="status" label="状态"></el-table-column><el-table-column prop="description" label="描述" min-width="160"></el-table-column></el-table></el-collapse-item>
+              <el-collapse-item title="Top 产品" name="7"><el-table :data="detail.top_products" size="small"><el-table-column prop="name" label="产品"></el-table-column><el-table-column prop="amount" label="金额"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column></el-table></el-collapse-item>
+            </el-collapse>
+            <div class="sec-title" style="margin-top:16px">跟进时间轴</div>
+            <div>
+              <div v-for="(t,i) in detail.timeline" :key="i" class="timeline-item">
+                <div class="tl-dot" :style="{background: ({跟进:'#C00000',订单:'#2ba471',客诉:'#e0532f'}[t.type]||'#888')}"></div>
+                <div class="tl-body"><div class="tl-t">{{t.title}}</div><div class="tl-c">{{t.content}}</div><div class="tl-time">{{t.time}}</div></div>
+              </div>
+              <div v-if="!detail.timeline.length" class="empty">暂无记录</div>
+            </div>
+          </template>
+        </div>
+      </el-drawer>
+    </div>`,
+    mounted(){ this.load(); }
+  };
+
+  /* ============================ 商机看板 ============================ */
+  const OppBoard = {
+    data(){ return { board:[], loading:false, scope:'auto' }; },
+    methods:{
+      async load(){ this.loading=true; try{ this.board = await api('/opportunities/board',{params:{scope:this.scope}}); }catch(e){ElMessage.error(e.message);} finally{this.loading=false;} },
+      fmtMoney
+    },
+    template:`
+    <div>
+      <div class="scope-bar">
+        <span>数据范围：</span>
+        <el-select v-model="scope" @change="load" style="width:150px">
+          <el-option label="按权限" value="auto"></el-option><el-option label="仅本人" value="mine"></el-option><el-option label="本部门" value="dept"></el-option><el-option label="全公司" value="all"></el-option>
+        </el-select>
+        <span class="spacer"></span><el-button @click="load">刷新</el-button>
+      </div>
+      <div class="kanban" v-loading="loading">
+        <div class="kb-col" v-for="col in board" :key="col.stage">
+          <div class="kb-col-h"><span>{{col.stage}}</span><el-tag size="small">{{col.count}}单</el-tag></div>
+          <div style="color:var(--brand);font-weight:700;font-size:13px;margin-bottom:8px">{{ fmtMoney(col.amount) }}</div>
+          <div class="kb-card" v-for="o in col.items" :key="o.id">
+            <div style="font-weight:600">{{o.name}}</div>
+            <div style="color:var(--muted);font-size:12px;margin-top:4px">{{o.customer_name}} · {{o.owner_name}}</div>
+            <div class="kb-amt">{{ fmtMoney(o.amount) }}</div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#b6bcc7;margin-top:4px"><span>赢单率 {{o.win_prob}}%</span><span>加权 {{fmtMoney(o.weighted)}}</span></div>
+          </div>
+          <div v-if="!col.items.length" class="empty">暂无</div>
+        </div>
+      </div>
+    </div>`,
+    mounted(){ this.load(); }
+  };
+
+  /* ============================ 审批中心 ============================ */
+  const ApprovalsView = {
+    data(){ return { items:[], loading:false }; },
+    methods:{
+      async load(){ this.loading=true; try{ this.items = await api('/approvals'); }catch(e){ElMessage.error(e.message);} finally{this.loading=false;} },
+      async act(it,approve){ try{ await api('/approvals/act',{method:'POST',body:{type:it.type,id:it.id,approve}}); ElMessage.success(approve?'已通过':'已驳回'); this.load(); }catch(e){ElMessage.error(e.message);} },
+      fmtMoney
+    },
+    template:`
+    <div class="card">
+      <div class="card-title">待审批事项 <span class="ct-sub">{{ items.length }} 项</span></div>
+      <el-table :data="items" v-loading="loading" stripe border>
+        <el-table-column prop="type" label="类型" width="110"><template #default="{row}"><el-tag>{{row.type}}</el-tag></template></el-table-column>
+        <el-table-column prop="no" label="单号" width="170"></el-table-column>
+        <el-table-column prop="customer" label="客户" width="140"></el-table-column>
+        <el-table-column prop="applicant" label="申请人" width="100"></el-table-column>
+        <el-table-column :label="row=>row.amount_label" width="120"><template #default="{row}">{{ fmtMoney(row.amount) }}</template></el-table-column>
+        <el-table-column prop="summary" label="摘要" min-width="180"></el-table-column>
+        <el-table-column prop="created_at" label="提交时间" width="160"></el-table-column>
+        <el-table-column label="操作" width="150" fixed="right"><template #default="{row}">
+          <el-button link type="success" size="small" @click="act(row,true)">通过</el-button>
+          <el-button link type="danger" size="small" @click="act(row,false)">驳回</el-button>
+        </template></el-table-column>
+      </el-table>
+      <div v-if="!items.length && !loading" class="empty">🎉 暂无待审批事项</div>
+    </div>`,
+    mounted(){ this.load(); }
+  };
+
+  /* ============================ 工作台 ============================ */
+  const EChart = {
+    props:{ option:Object, height:{default:'320px'} },
+    template:`<div :style="{width:'100%',height:height}"></div>`,
+    mounted(){ this.chart = echarts.init(this.$el); if(this.option) this.chart.setOption(this.option); window.addEventListener('resize',this.onResize); },
+    watch:{ option(v){ if(this.chart&&v) this.chart.setOption(v,true); } },
+    methods:{ onResize(){ this.chart&&this.chart.resize(); } },
+    beforeUnmount(){ window.removeEventListener('resize',this.onResize); this.chart&&this.chart.dispose(); }
+  };
+  function mkPie(data,title){ return { tooltip:{trigger:'item'}, legend:{bottom:0}, series:[{ type:'pie', radius:['38%','65%'], center:['50%','45%'], data:data.map(d=>({name:d.name,value:d.value})), label:{formatter:'{b}\n{d}%'}, itemStyle:{borderRadius:5,borderColor:'#fff',borderWidth:2} }], color:['#C00000','#e23b3b','#f5a623','#2ba471','#3b82f6','#8b5cf6','#f59e0b'] }; }
+  function mkBar(cats,series,title){ return { tooltip:{trigger:'axis'}, grid:{left:50,right:20,top:30,bottom:40}, xAxis:{type:'category',data:cats,axisLabel:{interval:0}}, yAxis:{type:'value'}, series:series.map(s=>({name:s.name,type:'bar',data:s.data,itemStyle:{color:s.color||'#C00000',borderRadius:[4,4,0,0]}})) }; }
+  function mkLine(labels,series){ return { tooltip:{trigger:'axis'}, legend:{top:0}, grid:{left:60,right:20,top:36,bottom:40}, xAxis:{type:'category',data:labels}, yAxis:{type:'value'}, series:series.map((s,i)=>({name:s.name,type:'line',smooth:true,data:s.data,areaStyle:s.area?{opacity:.12}:undefined,itemStyle:{color:s.color||(['#C00000','#2ba471','#3b82f6','#f5a623'][i])}})) }; }
+  function mkFunnel(stages){ return { tooltip:{trigger:'item',formatter:'{b}: {c}'}, series:[{type:'funnel',left:'8%',right:'8%',top:20,bottom:20,data:stages.map(s=>({name:s.stage,value:s.count})),label:{formatter:'{b} {c}'}, color:['#C00000','#e23b3b','#f5a623','#2ba471','#3b82f6','#8b5cf6']}] }; }
+
+  const Workbench = {
+    components:{ EChart },
+    data(){ return { period:'month', scope:'auto', data:null, loading:false, focus:[], notifications:[] }; },
+    computed:{
+      kpis(){ return this.data?this.data.kpis:[]; },
+      funnelOpt(){ return this.data?mkFunnel(this.data.funnel):null; },
+      channelOpt(){ return this.data?mkPie(this.data.channel_sales,'渠道销售占比'):null; },
+      trendOpt(){ return this.data?mkLine(this.data.trend.labels,[{name:'销售额',data:this.data.trend.sales,area:true},{name:'回款额',data:this.data.trend.payments,area:true}]):null; },
+      statusOpt(){ return this.data?mkPie(this.data.order_status,'订单状态'):null; }
+    },
+    methods:{
+      async load(){ this.loading=true; try{ const p=await api('/dashboard',{params:{period:this.period,scope:this.scope}}); const f=await api('/focus',{params:{scope:this.scope}}); this.data=p; this.focus=f; }catch(e){ElMessage.error(e.message);} finally{this.loading=false;} },
+      fmtMoney, tagType
+    },
+    template:`
+    <div v-loading="loading">
+      <div class="scope-bar">
+        <span>时间范围：</span>
+        <el-select v-model="period" @change="load" style="width:130px">
+          <el-option label="今天" value="today"></el-option><el-option label="本周" value="week"></el-option><el-option label="本月" value="month"></el-option><el-option label="本季" value="quarter"></el-option><el-option label="本年" value="year"></el-option><el-option label="全部" value="all"></el-option>
+        </el-select>
+        <span style="margin-left:14px">数据范围：</span>
+        <el-select v-model="scope" @change="load" style="width:130px">
+          <el-option label="按权限" value="auto"></el-option><el-option label="仅本人" value="mine"></el-option><el-option label="本部门" value="dept"></el-option><el-option label="全公司" value="all"></el-option>
+        </el-select>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi" v-for="k in kpis" :key="k.label">
+          <div class="k-ic">{{ {customers:'🏢',opps:'💡',money:'💰',follow:'📝',orders:'🧾'}[k.icon]||'📊' }}</div>
+          <div class="k-label">{{k.label}}</div>
+          <div class="k-val">{{ k.kind==='money'?('¥'+Number(k.value).toLocaleString('zh-CN',{maximumFractionDigits:0})):Number(k.value).toLocaleString('zh-CN') }}<span class="k-unit" v-if="k.unit && k.unit!=='元'">{{k.unit}}</span></div>
+          <div class="k-growth" :class="(k.growth>=0)?'up':'down'" v-if="k.growth!==null && k.growth!==undefined">
+            {{ k.growth>=0?'▲':'▼' }} {{ Math.abs(k.growth) }}% <span style="color:var(--muted)">环比</span>
+          </div>
+        </div>
+      </div>
+      <el-row :gutter="14" style="margin-top:14px">
+        <el-col :span="16"><div class="card"><div class="card-title">销售/回款趋势 <span class="ct-sub">近12个月</span></div><EChart v-if="trendOpt" :option="trendOpt" height="300px"></EChart></div></el-col>
+        <el-col :span="8"><div class="card"><div class="card-title">商机漏斗</div><EChart v-if="funnelOpt" :option="funnelOpt" height="300px"></EChart></div></el-col>
+      </el-row>
+      <el-row :gutter="14" style="margin-top:14px">
+        <el-col :span="8"><div class="card"><div class="card-title">渠道销售占比</div><EChart v-if="channelOpt" :option="channelOpt" height="280px"></EChart></div></el-col>
+        <el-col :span="8"><div class="card"><div class="card-title">订单状态</div><EChart v-if="statusOpt" :option="statusOpt" height="280px"></EChart></div></el-col>
+        <el-col :span="8"><div class="card"><div class="card-title">业务关注 · 待办 <span class="ct-sub">{{focus.length}}</span></div>
+          <div v-for="(t,i) in focus" :key="i" class="timeline-item">
+            <div class="tl-dot" :style="{background:(t.level==='high'?'#e0532f':'#f5a623')}"></div>
+            <div class="tl-body"><div class="tl-t"><el-tag :type="t.level==='high'?'danger':'warning'" size="small">{{t.type}}</el-tag> {{t.title}}</div><div class="tl-c">{{t.desc}}</div></div>
+          </div>
+          <div v-if="!focus.length" class="empty">暂无待办</div>
+        </div></el-col>
+      </el-row>
+      <el-row :gutter="14" style="margin-top:14px">
+        <el-col :span="16"><div class="card"><div class="card-title">Top 客户 (按累计订单额)</div>
+          <el-table :data="(data&&data.top_customers)||[]" size="small"><el-table-column prop="name" label="客户"></el-table-column><el-table-column prop="amount" label="订单额" align="right"><template #default="{row}">{{ fmtMoney(row.amount) }}</template></el-table-column></el-table>
+        </div></el-col>
+        <el-col :span="8"><div class="card"><div class="card-title">销售管道</div>
+          <div class="drawer-stats" style="grid-template-columns:1fr">
+            <div class="ds"><div class="v">{{ data?fmtMoney(data.pipeline.amount):'-' }}</div><div class="l">管道总额</div></div>
+            <div class="ds"><div class="v">{{ data?fmtMoney(data.pipeline.weighted):'-' }}</div><div class="l">加权预测</div></div>
+            <div class="ds"><div class="v">{{ data?data.pipeline.count:0 }}</div><div class="l">在途商机数</div></div>
+          </div>
+        </div></el-col>
+      </el-row>
+    </div>`,
+    mounted(){ this.load(); }
+  };
+
+  /* ============================ 分析视图 ============================ */
+  const AnalysisView = {
+    components:{ EChart },
+    props:{ atype:String },
+    data(){ return { period:'year', scope:'auto', year:new Date().getFullYear(), data:null, loading:false, years:[] }; },
+    computed:{
+      periodLabel(){ return ({today:'今天',week:'本周',month:'本月',quarter:'本季度',year:'本年',all:'全部'})[this.period]; },
+      catPie(){ return this.data&&(this.atype==='sales')?mkPie(this.data.categories,'品类销售'):(this.data&&this.atype==='product'?mkPie(this.data.categories.map(c=>({name:c.name,value:c.amount})),'品类利润'):null); },
+      trend(){ return this.data?mkLine(this.data.trend.labels,[{name:'销售额',data:this.data.trend.sales,area:true},{name:'回款额',data:this.data.trend.payments,area:true}]):null; },
+      agingPie(){ return this.data&&this.atype==='finance'?mkPie(this.data.aging,'账龄分布'):null; },
+      monthlyBar(){ return this.data&&this.atype==='target'?mkBar(this.data.monthly.map(m=>m.month),[{name:'目标',data:this.data.monthly.map(m=>m.target)},{name:'实际',data:this.data.monthly.map(m=>m.actual),color:'#2ba471'}]):null; }
+    },
+    methods:{
+      async load(){
+        this.loading=true;
+        try{
+          if(this.atype==='customer') this.data = await api('/analysis/customer',{params:{period:this.period,scope:this.scope}});
+          else if(this.atype==='sales') this.data = await api('/analysis/sales',{params:{period:this.period,scope:this.scope}});
+          else if(this.atype==='finance') this.data = await api('/analysis/finance',{params:{period:this.period,scope:this.scope}});
+          else if(this.atype==='target'){ const o=await api('/analysis/options'); this.years=o.years||[]; this.data = await api('/analysis/target',{params:{year:this.year}}); }
+          else if(this.atype==='product') this.data = await api('/analysis/product',{params:{period:this.period}});
+        }catch(e){ ElMessage.error(e.message); } finally{ this.loading=false; }
+      },
+      levelPie(){ return this.data?mkPie(this.data.by_level,'等级'):null; },
+      typePie(){ return this.data?mkPie(this.data.by_type,'类型'):null; },
+      channelPie(){ return this.data?mkPie(this.data.by_channel,'渠道'):null; },
+      monthlyNewBar(){ return this.data?mkBar(this.data.monthly_new.labels,[{name:'新增',data:this.data.monthly_new.values,color:'#C00000'}]):null; },
+      orderStatusPie(){ return this.data?mkPie(this.data.order_status,'状态'):null; },
+      fmtMoney, fmtNum, rateColor, tagType
+    },
+    watch:{ period(){ this.load(); }, scope(){ this.load(); }, year(){ this.load(); }, atype(){ this.load(); } },
+    template:`
+    <div v-loading="loading">
+      <div class="scope-bar" v-if="atype!=='target'">
+        <span>时间范围：</span>
+        <el-select v-model="period" style="width:120px">
+          <el-option label="本月" value="month" v-if="atype==='customer'"></el-option>
+          <el-option label="本季" value="quarter" v-if="atype==='customer'"></el-option>
+          <el-option label="本年" value="year"></el-option><el-option label="全部" value="all"></el-option>
+        </el-select>
+        <span style="margin-left:14px">数据范围：</span>
+        <el-select v-model="scope" style="width:120px">
+          <el-option label="按权限" value="auto"></el-option><el-option label="仅本人" value="mine"></el-option><el-option label="本部门" value="dept"></el-option><el-option label="全公司" value="all"></el-option>
+        </el-select>
+      </div>
+      <div class="scope-bar" v-else>
+        <span>年度：</span>
+        <el-select v-model="year" style="width:130px"><el-option v-for="y in years" :key="y" :label="y+'年'" :value="y"></el-option></el-select>
+      </div>
+
+      <!-- 客户分析 -->
+      <template v-if="atype==='customer' && data">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k-ic">🏢</div><div class="k-label">客户总数</div><div class="k-val">{{fmtNum(data.total)}}</div></div>
+          <div class="kpi"><div class="k-ic">✨</div><div class="k-label">新增客户</div><div class="k-val">{{fmtNum(data.new)}}<span class="k-unit">家</span></div><div class="k-growth" :class="data.new_growth>=0?'up':'down'" v-if="data.new_growth!==null">▲ {{Math.abs(data.new_growth)}}%</div></div>
+          <div class="kpi"><div class="k-ic">🔥</div><div class="k-label">活跃客户</div><div class="k-val">{{fmtNum(data.active)}}<span class="k-unit">活跃率{{data.active_rate}}%</span></div></div>
+          <div class="kpi"><div class="k-ic">😴</div><div class="k-label">沉睡客户</div><div class="k-val">{{fmtNum(data.sleeping)}}</div></div>
+          <div class="kpi"><div class="k-ic">🌊</div><div class="k-label">公海客户</div><div class="k-val">{{fmtNum(data.pool_count)}}</div></div>
+        </div>
+        <el-row :gutter="14" style="margin-top:14px">
+          <el-col :span="8"><div class="card"><div class="card-title">客户等级分布</div><EChart v-if="data.by_level.length" :option="levelPie()" height="260px"></EChart><div v-else class="empty">暂无</div></div></el-col>
+          <el-col :span="8"><div class="card"><div class="card-title">客户类型分布</div><EChart v-if="data.by_type.length" :option="typePie()" height="260px"></EChart><div v-else class="empty">暂无</div></div></el-col>
+          <el-col :span="8"><div class="card"><div class="card-title">渠道分布</div><EChart v-if="data.by_channel.length" :option="channelPie()" height="260px"></EChart><div v-else class="empty">暂无</div></div></el-col>
+        </el-row>
+        <el-row :gutter="14" style="margin-top:14px">
+          <el-col :span="12"><div class="card"><div class="card-title">月度新增客户</div><EChart v-if="data.monthly_new.labels.length" :option="monthlyNewBar()" height="280px"></EChart></div></el-col>
+          <el-col :span="12"><div class="card"><div class="card-title">客户贡献 Top10</div>
+            <el-table :data="data.top_customers" size="small"><el-table-column type="index" width="40"></el-table-column><el-table-column prop="name" label="客户"></el-table-column><el-table-column prop="amount" label="金额" align="right"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column><el-table-column prop="rate" label="占比" width="80"><template #default="{row}">{{row.rate}}%</template></el-table-column></el-table>
+          </div></el-col>
+        </el-row>
+      </template>
+
+      <!-- 销售分析 -->
+      <template v-else-if="atype==='sales' && data">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k-ic">🧾</div><div class="k-label">销售总额</div><div class="k-val">{{fmtMoney(data.total)}}</div></div>
+          <div class="kpi"><div class="k-ic">📦</div><div class="k-label">订单数</div><div class="k-val">{{fmtNum(data.orders)}}</div></div>
+          <div class="kpi"><div class="k-ic">💰</div><div class="k-label">回款额</div><div class="k-val">{{fmtMoney(data.paid)}}</div></div>
+          <div class="kpi"><div class="k-ic">📊</div><div class="k-label">平均客单</div><div class="k-val">{{fmtMoney(data.avg_order)}}</div></div>
+          <div class="kpi"><div class="k-ic">✅</div><div class="k-label">回款率</div><div class="k-val">{{data.collection_rate}}%</div></div>
+        </div>
+        <el-row :gutter="14" style="margin-top:14px">
+          <el-col :span="14"><div class="card"><div class="card-title">销售/回款趋势</div><EChart v-if="trend" :option="trend" height="300px"></EChart></div></el-col>
+          <el-col :span="10"><div class="card"><div class="card-title">品类销售占比</div><EChart v-if="catPie" :option="catPie" height="300px"></EChart></div></el-col>
+        </el-row>
+        <el-row :gutter="14" style="margin-top:14px">
+          <el-col :span="8"><div class="card"><div class="card-title">Top 产品</div><el-table :data="data.top_products" size="small"><el-table-column prop="name" label="产品" min-width="110"></el-table-column><el-table-column prop="amount" label="金额" align="right"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column><el-table-column prop="qty" label="销量" width="70"></el-table-column></el-table></div></el-col>
+          <el-col :span="8"><div class="card"><div class="card-title">Top 业务员</div><el-table :data="data.top_reps" size="small"><el-table-column prop="name" label="业务员"></el-table-column><el-table-column prop="amount" label="业绩" align="right"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column><el-table-column prop="orders" label="订单" width="60"></el-table-column></el-table></div></el-col>
+          <el-col :span="8"><div class="card"><div class="card-title">订单状态</div><EChart v-if="data.order_status.length" :option="orderStatusPie()" height="260px"></EChart></div></el-col>
+        </el-row>
+      </template>
+
+      <!-- 财务分析 -->
+      <template v-else-if="atype==='finance' && data">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k-ic">📊</div><div class="k-label">应收总额</div><div class="k-val">{{fmtMoney(data.receivable_total)}}</div></div>
+          <div class="kpi"><div class="k-ic">⚠️</div><div class="k-label">逾期金额</div><div class="k-val">{{fmtMoney(data.overdue_total)}}</div></div>
+          <div class="kpi"><div class="k-ic">🔢</div><div class="k-label">逾期笔数</div><div class="k-val">{{fmtNum(data.overdue_count)}}</div></div>
+          <div class="kpi"><div class="k-ic">✅</div><div class="k-label">回款率</div><div class="k-val">{{data.collection_rate}}%</div></div>
+          <div class="kpi"><div class="k-ic">🧾</div><div class="k-label">已开票</div><div class="k-val">{{fmtMoney(data.invoice_total)}}</div></div>
+        </div>
+        <el-row :gutter="14" style="margin-top:14px">
+          <el-col :span="14"><div class="card"><div class="card-title">销售/回款趋势</div><EChart v-if="trend" :option="trend" height="300px"></EChart></div></el-col>
+          <el-col :span="10"><div class="card"><div class="card-title">账龄分布</div><EChart v-if="agingPie" :option="agingPie" height="300px"></EChart></div></el-col>
+        </el-row>
+        <el-row :gutter="14" style="margin-top:14px">
+          <el-col :span="14"><div class="card"><div class="card-title">Top 欠款客户</div><el-table :data="data.top_debtors" size="small"><el-table-column prop="name" label="客户"></el-table-column><el-table-column prop="amount" label="欠款" align="right"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column></el-table></div></el-col>
+          <el-col :span="10"><div class="card"><div class="card-title">统计</div>
+            <div class="drawer-stats" style="grid-template-columns:1fr 1fr">
+              <div class="ds"><div class="v">{{fmtMoney(data.uninvoiced)}}</div><div class="l">待开票</div></div>
+              <div class="ds"><div class="v">{{fmtMoney(data.invoice_total)}}</div><div class="l">已开票</div></div>
+            </div>
+          </div></el-col>
+        </el-row>
+      </template>
+
+      <!-- 业绩目标 -->
+      <template v-else-if="atype==='target' && data">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k-ic">🎯</div><div class="k-label">目标总额</div><div class="k-val">{{fmtMoney(data.total_target)}}</div></div>
+          <div class="kpi"><div class="k-ic">📈</div><div class="k-label">实际总额</div><div class="k-val">{{fmtMoney(data.total_actual)}}</div></div>
+          <div class="kpi"><div class="k-ic">✅</div><div class="k-label">总达成率</div><div class="k-val" :style="{color:rateColor(data.total_rate)}">{{data.total_rate}}%</div></div>
+        </div>
+        <div class="card" style="margin-top:14px"><div class="card-title">{{year}}年 月度目标 vs 实际</div><EChart v-if="monthlyBar" :option="monthlyBar" height="320px"></EChart></div>
+        <div class="card" style="margin-top:14px"><div class="card-title">目标明细</div>
+          <el-table :data="data.rows" size="small" stripe>
+            <el-table-column prop="user_name" label="对象" width="130"></el-table-column>
+            <el-table-column prop="month" label="月份" width="80"><template #default="{row}">{{row.month?row.month+'月':'全年'}}</template></el-table-column>
+            <el-table-column prop="target_amount" label="目标" align="right"><template #default="{row}">{{fmtMoney(row.target_amount)}}</template></el-table-column>
+            <el-table-column prop="actual" label="实际" align="right"><template #default="{row}">{{fmtMoney(row.actual)}}</template></el-table-column>
+            <el-table-column label="达成率" width="180"><template #default="{row}">
+              <el-progress :percentage="Math.min(100,row.rate)" :color="rateColor(row.rate)" :format="()=>row.rate+'%'"></el-progress>
+            </template></el-table-column>
+            <el-table-column prop="gap" label="差额" align="right"><template #default="{row}"><span :style="{color:row.gap>0?'#2ba471':'#e0532f'}">{{fmtMoney(row.gap)}}</span></template></el-table-column>
+          </el-table>
+        </div>
+      </template>
+
+      <!-- 产品分析 -->
+      <template v-else-if="atype==='product' && data">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k-ic">🍲</div><div class="k-label">销售总额</div><div class="k-val">{{fmtMoney(data.total_amount)}}</div></div>
+          <div class="kpi"><div class="k-ic">💰</div><div class="k-label">毛利总额</div><div class="k-val">{{fmtMoney(data.total_profit)}}</div></div>
+          <div class="kpi"><div class="k-ic">📦</div><div class="k-label">产品数</div><div class="k-val">{{fmtNum(data.items.length)}}</div></div>
+        </div>
+        <el-row :gutter="14" style="margin-top:14px">
+          <el-col :span="10"><div class="card"><div class="card-title">品类销售/毛利</div><EChart v-if="catPie" :option="catPie" height="300px"></EChart></div></el-col>
+          <el-col :span="14"><div class="card"><div class="card-title">产品利润排行</div>
+            <el-table :data="data.items" size="small" stripe>
+              <el-table-column type="index" width="40"></el-table-column>
+              <el-table-column prop="name" label="产品" min-width="120"></el-table-column>
+              <el-table-column prop="category" label="品类" width="90"></el-table-column>
+              <el-table-column prop="qty" label="销量" width="80"></el-table-column>
+              <el-table-column prop="amount" label="销售额" align="right"><template #default="{row}">{{fmtMoney(row.amount)}}</template></el-table-column>
+              <el-table-column prop="profit" label="毛利" align="right"><template #default="{row}">{{fmtMoney(row.profit)}}</template></el-table-column>
+              <el-table-column label="毛利率" width="80"><template #default="{row}"><span :style="{color:rateColor(row.rate)}">{{row.rate}}%</span></template></el-table-column>
+            </el-table>
+          </div></el-col>
+        </el-row>
+      </template>
+    </div>`,
+    mounted(){ this.load(); }
+  };
+
+  /* ============================ 登录 ============================ */
+  const LoginView = {
+    data(){ return { form:{ username:'', password:'' }, loading:false }; },
+    methods:{
+      async submit(){
+        this.loading=true;
+        try{
+          const body = new URLSearchParams(); body.set('username',this.form.username); body.set('password',this.form.password);
+          const res = await fetch('/api/login',{ method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+          const data = await res.json().catch(()=>({}));
+          if(!res.ok) throw new Error(data.detail||'登录失败');
+          setToken(data.access_token); store.user = data.user;
+          await bootstrap();
+          ElMessage.success('登录成功');
+        }catch(e){ ElMessage.error(e.message); } finally{ this.loading=false; }
+      }
+    },
+    template:`
+    <div class="login">
+      <div class="login-left">
+        <div class="brand-logo">🍲</div>
+        <div class="brand-name">川崎 CRM</div>
+        <div class="brand-slogan">公司 · 客户关系管理平台</div>
+        <ul class="brand-feats">
+          <li><i>✓</i> 线索→客户→商机→订单 全链路管理</li>
+          <li><i>✓</i> 销售/财务/售后多维分析看板</li>
+          <li><i>✓</i> 客户360视图与公海协同</li>
+          <li><i>✓</i> 角色权限与审批流一体化</li>
+        </ul>
+      </div>
+      <div class="login-right">
+        <div class="login-box">
+          <h2>欢迎登录</h2>
+          <div class="login-tip">请输入您的账号和密码</div>
+          <el-form @submit.prevent="submit" label-position="top">
+            <div class="login-field"><el-input v-model="form.username" placeholder="账号" size="large"></el-input></div>
+            <div class="login-field"><el-input v-model="form.password" type="password" placeholder="密码" size="large" show-password @keyup.enter="submit"></el-input></div>
+            <el-button class="login-btn" :loading="loading" @click="submit">登 录</el-button>
+          </el-form>
+          <div class="login-foot">上海新川崎食品有限公司 · 内部系统</div>
+        </div>
+      </div>
+    </div>`
+  };
+
+  /* ============================ 个人中心 ============================ */
+  const UserCenter = {
+    data(){ return { tab:'profile', profile:{}, pwd:{old_password:'',new_password:''}, saving:false }; },
+    methods:{
+      async loadProfile(){ try{ this.profile = Object.assign({}, store.user); }catch(e){} },
+      async saveProfile(){ this.saving=true; try{ const u=await api('/me',{method:'PUT',body:{phone:this.profile.phone,wechat:this.profile.wechat,email:this.profile.email,name:this.profile.name}}); store.user=u; ElMessage.success('已保存'); }catch(e){ElMessage.error(e.message);} finally{this.saving=false;} },
+      async changePwd(){ if(!this.pwd.old_password||!this.pwd.new_password){ElMessage.warning('请填写完整');return;} this.saving=true; try{ await api('/me/password',{method:'POST',body:this.pwd}); ElMessage.success('密码已修改'); this.pwd={old_password:'',new_password:''}; }catch(e){ElMessage.error(e.message);} finally{this.saving=false;} }
+    },
+    template:`
+    <div class="card" style="max-width:680px">
+      <el-tabs v-model="tab">
+        <el-tab-pane label="基本资料" name="profile">
+          <el-form :model="profile" label-width="90px">
+            <el-form-item label="姓名"><el-input v-model="profile.name"></el-input></el-form-item>
+            <el-form-item label="账号"><el-input v-model="profile.username" disabled></el-input></el-form-item>
+            <el-form-item label="角色"><el-input :value="profile.role_label" disabled></el-input></el-form-item>
+            <el-form-item label="手机"><el-input v-model="profile.phone"></el-input></el-form-item>
+            <el-form-item label="微信"><el-input v-model="profile.wechat"></el-input></el-form-item>
+            <el-form-item label="邮箱"><el-input v-model="profile.email"></el-input></el-form-item>
+            <el-button type="primary" :loading="saving" @click="saveProfile">保存资料</el-button>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane label="修改密码" name="pwd">
+          <el-form :model="pwd" label-width="90px">
+            <el-form-item label="原密码"><el-input v-model="pwd.old_password" type="password" show-password></el-input></el-form-item>
+            <el-form-item label="新密码"><el-input v-model="pwd.new_password" type="password" show-password></el-input></el-form-item>
+            <el-button type="primary" :loading="saving" @click="changePwd">修改密码</el-button>
+          </el-form>
+        </el-tab-pane>
+      </el-tabs>
+    </div>`,
+    mounted(){ this.loadProfile(); }
+  };
+
+  /* ============================ 产品分类（三级·自研递归树） ============================ */
+  // 递归节点组件：点击名称/箭头展开其子级
+  const CatNode = {
+    name: 'CatNode',
+    props: { node: Object, depth: { type: Number, default: 0 }, openIds: { type: Array, default: () => [] } },
+    computed:{
+      hasChildren(){ return (this.node.children || []).length > 0; },
+      isOpen(){ return this.openIds.indexOf(this.node.id) >= 0; }
+    },
+    methods:{
+      levelLabel(l){ return ({1:'一级',2:'二级',3:'三级'}[l]) || ('L'+l); },
+      levelType(l){ return ({1:'',2:'warning',3:'danger'}[l]) || 'info'; },
+      toggle(){ if(this.hasChildren){ this.$emit('toggle', this.node); } },
+      onEdit(){ this.$emit('edit', this.node); },
+      onDel(){ this.$emit('del', this.node); }
+    },
+    template:`
+    <div class="cat-node">
+      <div class="cat-row" :class="{'cat-row-odd': depth%2===1}" :style="{paddingLeft:(12+depth*26)+'px'}">
+        <span class="cat-caret" @click="toggle">{{ hasChildren ? (isOpen ? '▾' : '▸') : '·' }}</span>
+        <span class="cat-name" :class="{clickable:hasChildren}" @click="toggle">{{ node.name }}</span>
+        <el-tag size="small" :type="levelType(node.level)" effect="plain" class="cat-tag">{{ levelLabel(node.level) }}</el-tag>
+        <span class="cat-meta">产品 {{ node.product_count||0 }} · 序 {{ node.sort||0 }}</span>
+        <span class="cat-note" v-if="node.note" :title="node.note">{{ node.note }}</span>
+        <span class="cat-ops">
+          <el-button link type="primary" size="small" @click.stop="onEdit">编辑</el-button>
+          <el-button link type="danger" size="small" :disabled="hasChildren" @click.stop="onDel">删除</el-button>
+        </span>
+      </div>
+      <div v-if="isOpen && hasChildren">
+        <cat-node v-for="c in node.children" :key="c.id" :node="c" :depth="depth+1" :open-ids="openIds"
+          @toggle="$emit('toggle',$event)" @edit="$emit('edit',$event)" @del="$emit('del',$event)"></cat-node>
+      </div>
+    </div>`
+  };
+
+  const CategoryView = {
+    data(){ return { rows:[], loading:false, dialog:false, editing:null, openIds:[],
+      form:{level1:'',level2:'',level3:'',sort:0,note:''} }; },
+    methods:{
+      async load(){ this.loading=true; try{ const flat = await api('/product-categories'); this.rows = this.buildTree(flat); }catch(e){ ElMessage.error(e.message); } finally{ this.loading=false; } },
+      // 将扁平（含 parent_id）列表转成树
+      buildTree(flat){
+        const byId = {};
+        flat.forEach(r => { byId[r.id] = Object.assign({}, r, { children: [] }); });
+        const roots = [];
+        flat.forEach(r => {
+          const node = byId[r.id];
+          if (r.parent_id && byId[r.parent_id]) { byId[r.parent_id].children.push(node); }
+          else { roots.push(node); }
+        });
+        const sortRec = (list) => { list.sort((a,b)=>(a.sort||0)-(b.sort||0)||a.id-b.id); list.forEach(n=>sortRec(n.children||[])); };
+        sortRec(roots);
+        return roots;
+      },
+      // 点击名称/箭头：展开或收起该节点的子级
+      toggle(row){ const i = this.openIds.indexOf(row.id); if(i>=0){ this.openIds.splice(i,1); } else { this.openIds.push(row.id); } },
+      expandAll(){ const ids=[]; const walk=l=>{ l.forEach(n=>{ if((n.children||[]).length){ ids.push(n.id); walk(n.children);} }); }; walk(this.rows); this.openIds = ids; },
+      collapseAll(){ this.openIds = []; },
+      openCreate(){ this.editing=null; this.form={level1:'',level2:'',level3:'',sort:0,note:''}; this.dialog=true; },
+      openEdit(r){ this.editing=r; this.form={level1:r.name,level2:'',level3:'',sort:r.sort||0,note:r.note||''}; this.dialog=true; },
+      async refreshOpts(){ try{ const o=await api('/options'); store.opts=Object.assign(store.opts,o); }catch(e){} },
+      async save(){
+        try{
+          if(this.editing){
+            await api('/product-categories/'+this.editing.id,{method:'PUT',body:{name:this.form.level1,sort:this.form.sort,note:this.form.note}});
+          } else {
+            await api('/product-categories/row',{method:'POST',body:{level1:this.form.level1,level2:this.form.level2,level3:this.form.level3,sort:this.form.sort,note:this.form.note}});
+          }
+          this.dialog=false; await this.load(); await this.refreshOpts(); ElMessage.success('已保存');
+        }catch(e){ ElMessage.error(e.message); }
+      },
+      async del(r){
+        try{ await this.$confirm('确认删除该分类？删除后将无法恢复（含子分类需先删除子级）。','提示',{type:'warning'}); }catch(e){ return; }
+        try{ await api('/product-categories/'+r.id,{method:'DELETE'}); await this.load(); await this.refreshOpts(); ElMessage.success('已删除'); }catch(e){ ElMessage.error(e.message); }
+      }
+    },
+    mounted(){ this.load(); },
+    template:`
+    <div>
+      <div class="page-head">
+        <div class="ph-title">产品分类</div>
+        <div>
+          <el-button size="small" @click="expandAll">展开全部</el-button>
+          <el-button size="small" @click="collapseAll">收起全部</el-button>
+          <el-button type="primary" @click="openCreate">＋ 新增分类</el-button>
+        </div>
+      </div>
+      <div class="cat-tree" v-loading="loading">
+        <div class="cat-head">
+          <span class="cat-th" style="flex:1">分类名称</span>
+          <span class="cat-th cat-th-meta">层级</span>
+          <span class="cat-th cat-th-meta">产品数 / 排序</span>
+          <span class="cat-th cat-th-ops">操作</span>
+        </div>
+        <cat-node v-for="n in rows" :key="n.id" :node="n" :depth="0" :open-ids="openIds"
+          @toggle="toggle" @edit="openEdit" @del="del"></cat-node>
+        <div v-if="!loading && rows.length===0" class="cat-empty">暂无分类数据</div>
+      </div>
+
+      <el-dialog :title="editing?'编辑分类（修改名称）':'新增产品分类（三级）'" v-model="dialog" width="520px">
+        <el-form :model="form" label-width="80px">
+          <el-form-item :label="editing?'分类名称':'类目一'" required>
+            <el-input v-model="form.level1" :placeholder="editing?'请输入分类名称':'如：火锅蘸料（调料）'"></el-input>
+          </el-form-item>
+          <template v-if="!editing">
+            <el-form-item label="类目二"><el-input v-model="form.level2" placeholder="如：杯装（可空）"></el-input></el-form-item>
+            <el-form-item label="类目三"><el-input v-model="form.level3" placeholder="如：99g系列（可空）"></el-input></el-form-item>
+          </template>
+          <el-form-item label="排序"><el-input v-model.number="form.sort" type="number"></el-input></el-form-item>
+          <el-form-item label="备注"><el-input v-model="form.note" type="textarea" :rows="2"></el-input></el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="dialog=false">取消</el-button>
+          <el-button type="primary" @click="save">保存</el-button>
+        </template>
+      </el-dialog>
+    </div>`
+  };
+
+  /* ============================ 根组件 ============================ */
+  const App = {
+    components:{ LoginView, Workbench, AnalysisView, CrudView, CustomerView, OppBoard, ApprovalsView, UserCenter, CategoryView },
+    data(){ return { store, route:'workbench', searchQ:'', searchDrop:false, searchResult:null, notifVisible:false, quickVisible:false, userVisible:false, navCollapsed:false, openGroups: NAV.map(g=>g.group) }; },
+    computed:{
+      nav(){ return NAV; },
+      crumb(){ const item = ALL_NAV[this.route]; const g = NAV.find(g=>g.items.some(i=>i.key===this.route)); return { group:g?g.group:'', label:item?item.label:'' }; },
+      viewComp(){
+        if(this.route==='workbench') return 'Workbench';
+        if(this.route==='approvals') return 'ApprovalsView';
+        if(this.route==='customers') return 'CustomerView';
+        if(this.route==='opp-board') return 'OppBoard';
+        if(this.route==='user-center') return 'UserCenter';
+        if(this.route==='product-categories') return 'CategoryView';
+        if(this.route.startsWith('analysis/')) return 'AnalysisView';
+        if(MODULES[this.route]) return 'CrudView';
+        return 'Workbench';
+      },
+      viewProps(){
+        if(this.route.startsWith('analysis/')) return { atype: this.route.split('/')[1] };
+        if(MODULES[this.route]) return { mod: this.route };
+        return {};
+      },
+      routeKey(){ return this.route; }
+    },
+    methods:{
+      go(key){ this.route=key; location.hash = '#/'+key; this.searchDrop=false; this.notifVisible=false; this.quickVisible=false; this.userVisible=false; },
+      parseHash(){ const h = location.hash.replace(/^#\//,''); if(h && (ALL_NAV[h] || h==='user-center' || h.startsWith('analysis/'))) this.route=h; },
+      async bootstrapShared(){ try{ const o = await api('/options'); store.opts = Object.assign(store.opts, o); }catch(e){} },
+      async doSearch(){ if(!this.searchQ){ this.searchDrop=false; return; } try{ const r = await api('/search',{params:{q:this.searchQ}}); this.searchResult=r; this.searchDrop=true; }catch(e){} },
+      gotoSearch(group,item){ this.go(group.link); this.searchDrop=false; this.searchQ=''; },
+      async loadNotif(){ try{ store.notifications = await api('/notifications'); store.unread = store.notifications.length; }catch(e){} },
+      gotoNotif(n){ if(n.link) this.go(n.link); this.notifVisible=false; },
+      quickCreate(key){ store.ui.pendingCreate = key; this.quickVisible=false; this.go(key); },
+      async       logout(){ try{ setToken(''); store.user=null; location.hash=''; }catch(e){} },
+      toggleGroup(name){ const i=this.openGroups.indexOf(name); if(i>=0) this.openGroups.splice(i,1); else this.openGroups.push(name); },
+      isOpen(name){ return this.openGroups.indexOf(name)>=0; },
+      onHash(){ this.parseHash(); }
+    },
+    mounted(){
+      window.addEventListener('hashchange', this.onHash);
+      this.parseHash();
+      this.bootstrapShared();
+      this.loadNotif();
+    },
+    template:`
+    <div v-if="!store.user"><login-view></login-view></div>
+    <el-container v-else class="app-shell">
+      <el-aside width="224px" class="aside">
+        <div class="aside-brand">
+          <div class="aside-logo">🍲</div>
+          <div><div class="aside-title">川崎 CRM</div><div class="aside-sub">公司 · 客户管理平台</div></div>
+        </div>
+        <div class="aside-nav">
+          <template v-for="g in nav">
+            <div class="nav-group" @click="toggleGroup(g.group)">
+              <span class="ng-caret" :class="{'ng-collapsed':!isOpen(g.group)}">▾</span>
+              <span>{{ g.group }}</span>
+            </div>
+            <div v-for="it in g.items" v-show="isOpen(g.group)" :key="it.key" class="nav-item" :class="{active: route===it.key}" @click="go(it.key)">
+              <span class="ni">{{ it.icon }}</span><span>{{ it.label }}</span>
+            </div>
+          </template>
+        </div>
+        <div class="aside-foot">上海新川崎食品有限公司</div>
+      </el-aside>
+      <el-container>
+        <el-header class="topbar">
+          <div class="crumb"><span class="c-root">{{ crumb.group }}</span><span class="c-sep" v-if="crumb.group">/</span><span class="c-cur">{{ crumb.label }}</span></div>
+          <div class="top-right">
+            <div class="search-box">
+              <el-input v-model="searchQ" placeholder="全局搜索 客户/订单/商机..." clearable @input="doSearch" @focus="searchQ&&doSearch()" class="search-input">
+                <template #prefix><span>🔍</span></template>
+              </el-input>
+              <div v-if="searchDrop && searchResult" class="search-drop">
+                <template v-for="grp in searchResult.groups">
+                  <div class="search-grp-title">{{ grp.type }}</div>
+                  <div v-for="item in grp.items" :key="item.id" class="search-item" @click="gotoSearch(grp,item)">
+                    <span>{{ item.title }}</span><span class="si-desc">{{ item.desc }}</span>
+                  </div>
+                </template>
+                <div v-if="!searchResult.total" class="empty">无匹配结果</div>
+              </div>
+            </div>
+            <el-badge :value="store.unread" :hidden="!store.unread">
+              <span class="bell" @click="notifVisible=!notifVisible">🔔</span>
+            </el-badge>
+            <el-popover :visible="notifVisible" placement="bottom-end" :width="320" title="消息通知">
+              <template #reference><span style="position:absolute"></span></template>
+              <div style="max-height:340px;overflow:auto">
+                <div v-for="(n,i) in store.notifications" :key="i" class="search-item" @click="gotoNotif(n)">
+                  <div><el-tag :type="n.level==='danger'?'danger':(n.level==='warning'?'warning':'info')" size="small">{{ n.title }}</el-tag></div>
+                  <div class="si-desc">{{ n.desc }}</div>
+                </div>
+                <div v-if="!store.notifications.length" class="empty">暂无消息</div>
+              </div>
+            </el-popover>
+            <el-dropdown @command="quickCreate">
+              <el-button type="primary" size="small">＋ 快速创建</el-button>
+              <template #dropdown><el-dropdown-menu>
+                <el-dropdown-item command="customers">新增客户</el-dropdown-item>
+                <el-dropdown-item command="leads">新增线索</el-dropdown-item>
+                <el-dropdown-item command="opportunities">新增商机</el-dropdown-item>
+                <el-dropdown-item command="orders">新增订单</el-dropdown-item>
+                <el-dropdown-item command="payments">新增回款</el-dropdown-item>
+                <el-dropdown-item command="complaints">新增客诉</el-dropdown-item>
+              </el-dropdown-menu></template>
+            </el-dropdown>
+            <el-dropdown @command="onUserCmd">
+              <div class="avatar">{{ (store.user&&store.user.name||'?').slice(0,1) }}</div>
+              <template #dropdown><el-dropdown-menu>
+                <el-dropdown-item command="center" divided>个人中心</el-dropdown-item>
+                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+              </el-dropdown-menu></template>
+            </el-dropdown>
+          </div>
+        </el-header>
+        <el-main class="main">
+          <component :is="viewComp" v-bind="viewProps" :key="routeKey"></component>
+        </el-main>
+      </el-container>
+    </el-container>`,
+    onUserCmd(cmd){ if(cmd==='center') this.go('user-center'); else if(cmd==='logout') this.logout(); }
+  };
+
+  async function bootstrap(){ await api('/me').then(u=>{ store.user=u; }).catch(()=>{ store.user=null; setToken(''); }); }
+
+  const application = createApp(App);
+  application.use(ElementPlus);
+  application.component('EChart', EChart);
+  application.component('CatNode', CatNode);
+  application.mount('#app');
+  </script>
+</body>
+</html>
